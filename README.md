@@ -374,13 +374,6 @@ Parche de interfaz para restaurar el menú contextual clásico de Windows 10 en 
 </div>
 </details>
 
-### Descripción Técnica
-Restauración del menú contextual clásico de Windows 10 en Windows 11.
-
-* **InprocServer32 Injection:** Parche de registro para saltar el "Mostrar más opciones".
-</div>
-</details>
-
 ---
 
 ## Contacto y Soporte Técnico
