@@ -386,5 +386,5 @@ Para reportar fallos de compatibilidad o solicitar análisis de hardware, utiliz
 <p align="center">
   <img src="https://raw.githubusercontent.com/DarioA-Dev/Preparar-paginas-web/main/imagenes/nexo.png" alt="Footer El Nexo" style="width: 20%;">
   
-  <em>Arquitecto y Desarrollador Jefe: <b>Dario Alvarez Dorado</b></em>
+  <em>Arquitecto y Desarrollador Jefe: <b>Darío Alvarez Dorado</b></em>
 </p>
