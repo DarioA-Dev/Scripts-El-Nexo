@@ -391,7 +391,7 @@ Para reportar fallos de compatibilidad o solicitar análisis de hardware, utiliz
 * **Discord:** [Comunidad El Nexo](https://discord.gg/7cUeyMC6NV)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/DarioA-Dev/Preparar-paginas-web/main/imagenes/nexo.png alt="Footer El Nexo" style="width: 20%;">
+  <img src="https://raw.githubusercontent.com/DarioA-Dev/Preparar-paginas-web/main/imagenes/nexo.png" alt="Footer El Nexo" style="width: 20%;">
   
   <em>Arquitecto y Desarrollador Jefe: <b>Dario Alvarez</b></em>
 </p>
