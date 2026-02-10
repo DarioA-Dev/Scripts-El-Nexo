@@ -5,14 +5,15 @@
 :: ==========================================================
 chcp 65001 >nul
 title EL NEXO: GESTIÓN DE TAREAS [FASE 1]
-color 0B
+color 0A
 setlocal enabledelayedexpansion
 
 :: 1. VERIFICACIÓN DE PRIVILEGIOS
-net session >nul 2>&1
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
     color 0C
     echo [ERROR] NIVEL DE AUTORIDAD INSUFICIENTE. EJECUTA COMO ADMINISTRADOR.
+    echo Haz clic derecho > Ejecutar como administrador.
     pause >nul
     exit
 )
@@ -36,18 +37,18 @@ echo.
 echo [+] Sincronizando políticas de privacidad de aplicaciones...
 echo [AVISO] Se están inyectando directivas de denegación forzada...
 :: Desactivar aplicaciones de fondo para todos los usuarios
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v "LetAppsRunInBackground" /t REG_DWORD /d 2 /f >nul
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d 1 /f >nul
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d 0 /f >nul
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v "LetAppsRunInBackground" /t REG_DWORD /d 2 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d 0 /f >nul 2>&1
 echo [OK] Ejecución de aplicaciones en segundo plano neutralizada.
 
 :: 4. NEUTRALIZACIÓN DE GAMEDVR Y CAPTURA AUTOMÁTICA
 echo.
 echo [+] Desactivando monitorización de GameDVR y GameBar...
 echo [AVISO] Esto liberará ciclos de GPU utilizados en grabación pasiva...
-reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 0 /f >nul
-reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d 2 /f >nul
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v "AllowgameDVR" /t REG_DWORD /d 0 /f >nul
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d 2 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v "AllowgameDVR" /t REG_DWORD /d 0 /f >nul 2>&1
 echo [OK] Captura de fondo desactivada (Input Lag reducido).
 
 timeout /t 2 >nul
@@ -56,7 +57,7 @@ timeout /t 2 >nul
 ::   Ingeniería: Xbox Services, Telemetría y CPU Scheduling
 :: ==========================================================
 title EL NEXO: GESTIÓN DE TAREAS [FASE 2]
-color 0B
+color 0A
 
 :: 5. PURGA DE SERVICIOS XBOX (PROCESO INTENSIVO)
 echo.
@@ -83,9 +84,9 @@ echo [OK] Telemetría y diagnóstico desactivados.
 echo.
 echo [+] Ajustando prioridades del programador para Gaming...
 :: Forzar prioridad alta a los procesos multimedia y juegos
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "GPU Priority" /t REG_DWORD /d 8 /f >nul
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Priority" /t REG_DWORD /d 6 /f >nul
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "GPU Priority" /t REG_DWORD /d 8 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Priority" /t REG_DWORD /d 6 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
 echo [OK] Jerarquía de procesos configurada para alto rendimiento.
 
 :: 8. LIMPIEZA DE TAREAS PROGRAMADAS (REDUCCIÓN DE INTERRUPCIONES)

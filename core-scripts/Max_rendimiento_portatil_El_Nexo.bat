@@ -5,14 +5,15 @@
 :: ==========================================================
 chcp 65001 >nul
 title EL NEXO: RENDIMIENTO PORTÁTIL [FASE 1]
-color 0B
+color 0A
 setlocal enabledelayedexpansion
 
 :: 1. VERIFICACIÓN DE AUTORIDAD
-net session >nul 2>&1
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
     color 0C
     echo [ERROR] SE REQUIERE ACCESO AL KERNEL. EJECUTA COMO ADMINISTRADOR.
+    echo Haz clic derecho > Ejecutar como administrador.
     pause >nul
     exit
 )
@@ -38,7 +39,7 @@ set "nexo_lp_guid=22222222-2222-2222-2222-222222222222"
 powercfg -delete %nexo_lp_guid% >nul 2>&1
 :: Duplicar el esquema de Máximo Rendimiento
 powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 %nexo_lp_guid% >nul 2>&1
-powercfg -changename %nexo_lp_guid% "Máximo Rendimiento El Nexo (Portátil)"
+powercfg -changename %nexo_lp_guid% "Optimización Portátil El Nexo"
 powercfg -setactive %nexo_lp_guid%
 
 :: 4. DESBLOQUEO DE PARÁMETROS OCULTOS DEL PROCESADOR (TURBO BOOST)
@@ -51,9 +52,16 @@ echo ======================================================
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7" /v "Attributes" /t REG_DWORD /d 2 /f >nul
 :: Configurar Boost Mode en "Agresivo" (Máximo rendimiento)
 powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 be337238-0d82-4146-a960-4f3749d470c7 2
-:: Forzar estado mínimo y máximo del procesador al 100%
-powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 8934347c-01ed-4d00-8805-0c7ed2b904d9 100
+
+:: SEGURIDAD TÉRMICA NEXO: Configuración de refrigeración y estados mínimos
+echo [+] Aplicando directivas de refrigeración activa y seguridad...
+:: Directiva de refrigeración de sistema: Activo (1)
+powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 94D3A615-A899-4AC5-AD2C-96D587C4A8D9 1
+:: Estado mínimo del procesador: 5% (Permite enfriamiento en reposo)
+powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 8934347c-01ed-4d00-8805-0c7ed2b904d9 5
+:: Estado máximo del procesador: 100%
 powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 bc5038f0-0a87-4fb1-a738-5c41205631cc 100
+
 echo [OK] Frecuencias de CPU liberadas de restricciones de ahorro.
 
 timeout /t 2 >nul
@@ -62,7 +70,7 @@ timeout /t 2 >nul
 ::   Protocolo: Latencia de Hardware y Prioridad de Bus
 :: ==========================================================
 title EL NEXO: RENDIMIENTO PORTÁTIL [FASE 2]
-color 0B
+color 0A
 
 :: 5. MODO MSI DINÁMICO (HARDWARE OPTIMIZATION)
 echo.

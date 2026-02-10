@@ -1,11 +1,13 @@
 @echo off
+chcp 65001 >nul
 title EL NEXO - SSD NVMe Turbo
-color 0B
+color 0A
 
 :: 1. ADMIN CHECK
-fsutil dirty query %systemdrive% >nul
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
     echo ERROR: Necesitas permisos de Administrador.
+    echo Haz clic derecho > Ejecutar como administrador.
     pause
     exit
 )

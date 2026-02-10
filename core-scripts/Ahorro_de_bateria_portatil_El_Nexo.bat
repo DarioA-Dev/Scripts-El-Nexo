@@ -5,14 +5,15 @@
 :: ==========================================================
 chcp 65001 >nul
 title EL NEXO: AHORRO DE BATERÍA [FASE 1]
-color 0B
+color 0A
 setlocal enabledelayedexpansion
 
 :: 1. VERIFICACIÓN DE PRIVILEGIOS
-net session >nul 2>&1
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
     color 0C
     echo [ERROR] SE REQUIERE ACCESO AL KERNEL. EJECUTA COMO ADMINISTRADOR.
+    echo Haz clic derecho > Ejecutar como administrador.
     pause >nul
     exit
 )
@@ -67,7 +68,7 @@ timeout /t 2 >nul
 ::   Protocolo: Power Throttling, Visuales y Hibernación
 :: ==========================================================
 title EL NEXO: AHORRO DE BATERÍA [FASE 2]
-color 0B
+color 0A
 
 :: 6. ACTIVACIÓN DE POWER THROTTLING (CLAVE 2025)
 echo.
