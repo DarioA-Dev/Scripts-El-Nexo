@@ -5,11 +5,11 @@
 :: ==========================================================
 chcp 65001 >nul
 title EL NEXO: PROTOCOLO DE INGENIERÍA V3.5 (NÚCLEO)
-color 0B
+color 0A
 setlocal enabledelayedexpansion
 
 :: --- [1. VERIFICACIÓN DE NIVEL 0 (ADMIN)] ---
-net session >nul 2>&1
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
     color 0C
     echo [ERROR CRÍTICO] ACCESO DENEGADO AL KERNEL.
@@ -40,15 +40,15 @@ if /i "%choice%"=="S" (
 :: --- [3. GESTIÓN DE ENERGÍA DE ALTO VOLTAJE] ---
 echo.
 echo [+] Reconstruyendo Matriz de Energía (GUID Estático)...
-:: Definimos el GUID de El Nexo para evitar errores de búsqueda
+:: Definimos el GUID de El Nexo para evitar errores de búsqueda y forzar creación
 set "nexo_guid=11111111-1111-1111-1111-111111111111"
 
 :: Limpieza preventiva
 powercfg -delete %nexo_guid% >nul 2>&1
 
-:: Inyección del esquema "Ultimate Performance" oculto en Windows 10/11
+:: Creación Forzada: Duplicar esquema de alto rendimiento y capturar en GUID estático
 powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 %nexo_guid% >nul 2>&1
-powercfg -changename %nexo_guid% "Máximo Rendimiento El Nexo"
+powercfg -changename %nexo_guid% "Maximo Rendimiento El Nexo"
 powercfg -setactive %nexo_guid%
 
 :: TWEAKS PROFUNDOS DE ENERGÍA (EXTENDIDO)
@@ -102,20 +102,31 @@ color 0A
 :: --- [5. LATENCIA DE HARDWARE (MSI MODE & GPU)] ---
 echo.
 echo [+] Inyectando Modo MSI (Message Signaled Interrupts)...
-:: Algoritmo de búsqueda recursiva para activar MSI en todos los dispositivos compatibles
-for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" ^| findstr "Interrupt Management"') do (
-    reg add "%%i\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d 1 /f >nul
+echo     [INFO] Escaneando bus PCI. Esto puede tomar unos instantes...
+:: FIX: Se usa archivo temporal para evitar colgado de pipes en sistemas corruptos
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" > "%temp%\nexo_pci_scan.txt" 2>nul
+if exist "%temp%\nexo_pci_scan.txt" (
+    for /f "tokens=*" %%i in ('type "%temp%\nexo_pci_scan.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
+        reg add "%%i\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d 1 /f >nul 2>&1
+    )
+    del /f /q "%temp%\nexo_pci_scan.txt" >nul 2>&1
 )
 
 echo [+] Optimizando GPU (NVIDIA/AMD) y Prioridades...
-:: Desactivar ULPS (Ultra Low Power State) para AMD (Elimina stuttering)
-for /f "delims=" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Video" /s /f "EnableUlps" ^| findstr "HKEY_LOCAL_MACHINE"') do (
-    reg add "%%a" /v "EnableUlps" /t REG_DWORD /d 0 /f >nul
+echo     [INFO] Buscando y desactivando ULPS (Ultra Low Power State)...
+:: FIX: Optimizacion segura para ULPS
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\Video" /s /f "EnableUlps" > "%temp%\nexo_gpu_scan.txt" 2>nul
+if exist "%temp%\nexo_gpu_scan.txt" (
+    for /f "delims=" %%a in ('type "%temp%\nexo_gpu_scan.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
+        reg add "%%a" /v "EnableUlps" /t REG_DWORD /d 0 /f >nul 2>&1
+    )
+    del /f /q "%temp%\nexo_gpu_scan.txt" >nul 2>&1
 )
+
 :: Programación de GPU acelerada por hardware (HAGS) - Prioridad Alta
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d 2 /f >nul
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d 2 /f >nul 2>&1
 :: Desactivar "Optimización de pantalla completa" global
-reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d 2 /f >nul
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d 2 /f >nul 2>&1
 
 :: --- [6. OPTIMIZACIÓN DEL REGISTRO (CPU & RAM)] ---
 echo.

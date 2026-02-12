@@ -1,15 +1,15 @@
 @echo off
+chcp 65001 >nul
 :: ==========================================================
 ::   EL NEXO - INGENIERÍA DE RED Y BAJA LATENCIA v3.6
 ::   Protocolo: Optimización de Pila TCP/IP y Registro
 :: ==========================================================
-chcp 65001 >nul
 title EL NEXO: INGENIERÍA DE RED [FASE 1]
 color 0B
 setlocal enabledelayedexpansion
 
 :: VERIFICACIÓN DE AUTORIDAD (ADMIN)
-net session >nul 2>&1
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (echo [!] Error: Se requiere nivel de Administrador. & pause & exit)
 
 echo ======================================================
@@ -29,21 +29,21 @@ if /i "%rp%"=="S" (
 :: 2. OPTIMIZACIÓN DE LA PILA TCP/IP (NETSH)
 echo.
 echo [+] Reconfigurando parámetros globales de la pila TCP...
-netsh int tcp set global autotuninglevel=normal >nul
-netsh int tcp set global heuristics=disabled >nul
-netsh int tcp set global rss=enabled >nul
-netsh int tcp set global fastopen=enabled >nul
-netsh int tcp set global timestamps=disabled >nul
-netsh int tcp set global ecncapability=disabled >nul
+netsh int tcp set global autotuninglevel=normal >nul 2>&1
+netsh int tcp set global heuristics=disabled >nul 2>&1
+netsh int tcp set global rss=enabled >nul 2>&1
+netsh int tcp set global fastopen=enabled >nul 2>&1
+netsh int tcp set global timestamps=disabled >nul 2>&1
+netsh int tcp set global ecncapability=disabled >nul 2>&1
 :: Establecer proveedor de congestión moderno (CUBIC)
-netsh int tcp set supplemental template=internet congestionprovider=cubic >nul
+netsh int tcp set supplemental template=internet congestionprovider=cubic >nul 2>&1
 echo [OK] Pila TCP/IP optimizada para alta velocidad y baja pérdida.
 
 :: 3. ELIMINACIÓN DE ESTRANGULAMIENTO (THROTTLING)
 echo.
 echo [+] Ajustando índices de respuesta del sistema...
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 4294967295 /f >nul
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 0 /f >nul
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 4294967295 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 0 /f >nul 2>&1
 echo [OK] Restricciones de red multimedia desactivadas.
 
 timeout /t 2 >nul
@@ -86,10 +86,12 @@ if /i "%dns%"=="S" (
 
 :: 8. PURGA FINAL
 echo.
+echo [AVISO] Se ejecutará un reinicio de la configuración IP.
+echo         Es posible que experimentes una micro-desconexión temporal.
 echo [+] Reiniciando caché de resolución y sockets...
-ipconfig /flushdns >nul
-netsh winsock reset >nul
-netsh int ip reset >nul
+ipconfig /flushdns >nul 2>&1
+netsh winsock reset >nul 2>&1
+netsh int ip reset >nul 2>&1
 
 echo ======================================================
 echo    PROTOCOLO COMPLETADO. SISTEMA SINCRONIZADO.

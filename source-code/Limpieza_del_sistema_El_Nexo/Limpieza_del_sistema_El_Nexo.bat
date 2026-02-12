@@ -5,14 +5,15 @@
 :: ==========================================================
 chcp 65001 >nul
 title EL NEXO: MANTENIMIENTO DE SISTEMA [FASE 1]
-color 0B
+color 0A
 setlocal enabledelayedexpansion
 
 :: 1. VERIFICACIÓN DE PRIVILEGIOS
-net session >nul 2>&1
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
     color 0C
     echo [ERROR] NIVEL DE AUTORIDAD INSUFICIENTE. EJECUTA COMO ADMINISTRADOR.
+    echo Haz clic derecho > Ejecutar como administrador.
     pause >nul
     exit
 )
@@ -48,6 +49,7 @@ echo [+] Deteniendo servicios para purga de SoftwareDistribution...
 net stop wuauserv >nul 2>&1
 net stop bits >nul 2>&1
 if exist %windir%\SoftwareDistribution\Download (
+    echo [INFO] Limpiando carpeta de descargas de Windows Update...
     del /s /f /q %windir%\SoftwareDistribution\Download\*.* >nul 2>&1
     rmdir /s /q %windir%\SoftwareDistribution\Download >nul 2>&1
     mkdir %windir%\SoftwareDistribution\Download >nul 2>&1
@@ -66,7 +68,7 @@ timeout /t 3 >nul
 ::   Ingeniería: Cachés de Hardware, UWP Debloat y Logs
 :: ==========================================================
 title EL NEXO: MANTENIMIENTO DE SISTEMA [FASE 2]
-color 0B
+color 0A
 
 :: 5. CACHÉS DE HARDWARE (PROCESO POWERSHELL)
 echo.
@@ -100,16 +102,29 @@ echo [OK] Historial de eventos y errores reiniciado.
 :: 8. LIMPIEZA DE DIRECTORIOS VOLÁTILES MASIVA
 echo.
 echo [+] Ejecutando purga final de directorios temporales...
-del /s /f /q %temp%\*.* >nul 2>&1
-del /s /f /q %windir%\Temp\*.* >nul 2>&1
-del /s /f /q %windir%\Prefetch\*.* >nul 2>&1
+if defined temp (
+    echo [INFO] Limpiando carpeta TEMP de usuario...
+    del /s /f /q %temp%\*.* >nul 2>&1
+    for /d %%D in (%temp%\*) do rd /s /q "%%D" >nul 2>&1
+)
+if exist %windir%\Temp (
+    echo [INFO] Limpiando carpeta TEMP de Windows...
+    del /s /f /q %windir%\Temp\*.* >nul 2>&1
+    for /d %%D in (%windir%\Temp\*) do rd /s /q "%%D" >nul 2>&1
+)
+if exist %windir%\Prefetch (
+    echo [INFO] Limpiando Prefetch...
+    del /s /f /q %windir%\Prefetch\*.* >nul 2>&1
+)
 echo [OK] Archivos temporales y de prelectura eliminados.
 
 :: 9. OPTIMIZACIÓN DE INTERFAZ (EXPLORER)
 echo [+] Reconstruyendo base de datos de iconos y miniaturas...
 taskkill /f /im explorer.exe >nul 2>&1
-del /f /q "%LocalAppData%\IconCache.db" >nul 2>&1
-del /f /q "%LocalAppData%\Microsoft\Windows\Explorer\thumbcache_*.db" >nul 2>&1
+if defined LocalAppData (
+    del /f /q "%LocalAppData%\IconCache.db" >nul 2>&1
+    del /f /q "%LocalAppData%\Microsoft\Windows\Explorer\thumbcache_*.db" >nul 2>&1
+)
 start explorer.exe
 echo [OK] Caché de interfaz reiniciada.
 
