@@ -1,35 +1,92 @@
+<# : batch script hack
 @echo off
-:: ==========================================================
-::   EL NEXO - PROTOCOLO DE RESTAURACIÓN DE TAREAS
-::   Objetivo: Reestablecer servicios de Xbox y Apps de Fondo
-:: ==========================================================
+:: ==========================================================================
+::   EL NEXO - SUITE DE OPTIMIZACION v4.0
+::   (C) 2026 DarioA-Dev | Engineering Dept.
+:: ==========================================================================
+::   ARQUITECTURA: Hybrid PowerShell Wrapper (Stable)
+:: ==========================================================================
+
+:: 1. INICIO ROBUSTO
 chcp 65001 >nul
-title EL NEXO: RESTAURAR TAREAS Y SERVICIOS
+setlocal
+cd /d "%~dp0"
+title [EL NEXO] Kernel Optimizer
 color 0B
 
+:: 2. INTERFAZ (ASCII CON ESCAPE CORRECTO)
+cls
+echo.
+echo   ______ _       _   _ ______   _____
+echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \
+echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
+echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
+echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
+echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/
+echo.
+echo  ==========================================================================
+echo   MODULO: RESTAURAR TAREAS DE FONDO
+echo   INFO: Optimizando... Por favor espere.
+echo  ==========================================================================
+echo.
+
+:: 3. ELEVACION DE PRIVILEGIOS (ADMIN)
 net session >nul 2>&1
-if %errorlevel% neq 0 (echo [!] Error: Se requiere nivel de Administrador. & pause & exit)
-
-echo ======================================================
-echo      REESTABLECIENDO PROCESOS DE FONDO Y XBOX
-echo ======================================================
-
-:: 1. REACTIVAR APLICACIONES DE FONDO
-echo [-] Habilitando permisos de aplicaciones en segundo plano...
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v "LetAppsRunInBackground" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d 0 /f >nul 2>&1
-
-:: 2. REACTIVAR SERVICIOS DE XBOX Y GAMEBAR
-echo [-] Reconfigurando servicios de Xbox a modo Automático...
-for %%s in (XblAuthManager, XblGameSave, XboxGipSvc, XboxNetApiSvc, GamingServices) do (
-    sc config %%s start= demand >nul 2>&1
+if %errorLevel% neq 0 (
+    echo   [!] SOLICITANDO PERMISOS DE ADMINISTRADOR...
+    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
+    exit /b
 )
 
-:: 3. RESTAURAR GAME DVR
-echo [-] Habilitando GameDVR y Barra de Juegos...
-reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 1 /f >nul
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v "AllowgameDVR" /t REG_DWORD /d 1 /f >nul
+:: 4. LANZAMIENTO DEL MOTOR POWERSHELL
+:: Lee este mismo archivo, ignora las lineas Batch y ejecuta el resto
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression -Command ((Get-Content -LiteralPath '%~f0') -join \"`n\")"
+exit /b
+:>
 
-echo [OK] Servicios y procesos restaurados.
-pause
-exit
+# ===========================================================================
+#  ZONA POWERSHELL (AQUI EMPIEZA LA LOGICA REAL)
+# ===========================================================================
+$Host.UI.RawUI.WindowTitle = "[EL NEXO] Motor Hibrido Activo"
+Write-Host "   [CORE] Cargando modulos del sistema..." -ForegroundColor Cyan
+
+# 1. Background Apps
+Write-Host "`n   [-] Habilitando permisos de aplicaciones en segundo plano..." -ForegroundColor Yellow
+$appPrivacy = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy"
+if (Test-Path $appPrivacy) {
+    Set-ItemProperty -Path $appPrivacy -Name "LetAppsRunInBackground" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+}
+$bgApps = "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications"
+if (Test-Path $bgApps) {
+    Set-ItemProperty -Path $bgApps -Name "GlobalUserDisabled" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+}
+Write-Host "   [OK] Apps de fondo permitidas." -ForegroundColor Green
+
+# 2. Xbox Services
+Write-Host "`n   [-] Reconfigurando servicios de Xbox a modo Automático/Manual..." -ForegroundColor Yellow
+$xboxServices = @("XblAuthManager", "XblGameSave", "XboxGipSvc", "XboxNetApiSvc", "GamingServices")
+foreach ($s in $xboxServices) {
+    Set-Service -Name $s -StartupType Manual -ErrorAction SilentlyContinue
+}
+Write-Host "   [OK] Servicios de Xbox restaurados." -ForegroundColor Green
+
+# 3. GameDVR
+Write-Host "`n   [-] Habilitando GameDVR y Barra de Juegos..." -ForegroundColor Yellow
+$gameConfig = "HKCU:\System\GameConfigStore"
+if (Test-Path $gameConfig) {
+    Set-ItemProperty -Path $gameConfig -Name "GameDVR_Enabled" -Value 1 -Type DWord -ErrorAction SilentlyContinue
+}
+$dvrPolicy = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR"
+if (Test-Path $dvrPolicy) {
+    Set-ItemProperty -Path $dvrPolicy -Name "AllowgameDVR" -Value 1 -Type DWord -ErrorAction SilentlyContinue
+}
+Write-Host "   [OK] GameDVR habilitado." -ForegroundColor Green
+
+Write-Host "`n   ======================================================" -ForegroundColor Cyan
+Write-Host "      RESTAURACION COMPLETADA" -ForegroundColor Cyan
+Write-Host "   ======================================================" -ForegroundColor Cyan
+Write-Host "   Servicios y procesos restaurados." -ForegroundColor Yellow
+
+Write-Host "   [EXITO] Operacion finalizada." -ForegroundColor Green
+Write-Host "   Presiona cualquier tecla para salir..."
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

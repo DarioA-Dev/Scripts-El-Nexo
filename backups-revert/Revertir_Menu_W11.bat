@@ -1,32 +1,74 @@
+<# : batch script hack
 @echo off
-title EL NEXO - Revertir Menu (Moderno)
-color 0E
+:: ==========================================================================
+::   EL NEXO - SUITE DE OPTIMIZACION v4.0
+::   (C) 2026 DarioA-Dev | Engineering Dept.
+:: ==========================================================================
+::   ARQUITECTURA: Hybrid PowerShell Wrapper (Stable)
+:: ==========================================================================
 
-:: 1. ADMIN CHECK
-fsutil dirty query %systemdrive% >nul
-if %errorlevel% neq 0 (
-    echo ERROR: Necesitas permisos de Administrador.
-    pause
-    exit
-)
+:: 1. INICIO ROBUSTO
+chcp 65001 >nul
+setlocal
 cd /d "%~dp0"
+title [EL NEXO] Kernel Optimizer
+color 0B
 
-echo ==========================================
-echo    RESTAURAR MENU MODERNO (W11)
-echo ==========================================
-echo Volviendo al diseño original de Windows 11.
+:: 2. INTERFAZ (ASCII CON ESCAPE CORRECTO)
+cls
+echo.
+echo   ______ _       _   _ ______   _____
+echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \
+echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
+echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
+echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
+echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/
+echo.
+echo  ==========================================================================
+echo   MODULO: REVERTIR MENU W11 (MODERNO)
+echo   INFO: Optimizando... Por favor espere.
+echo  ==========================================================================
 echo.
 
-echo [1/2] Eliminando parche de registro...
-reg delete "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" /f >nul 2>&1
+:: 3. ELEVACION DE PRIVILEGIOS (ADMIN)
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo   [!] SOLICITANDO PERMISOS DE ADMINISTRADOR...
+    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
+    exit /b
+)
 
-echo [2/2] Reiniciando Explorador...
-taskkill /f /im explorer.exe >nul 2>&1
-start explorer.exe
+:: 4. LANZAMIENTO DEL MOTOR POWERSHELL
+:: Lee este mismo archivo, ignora las lineas Batch y ejecuta el resto
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression -Command ((Get-Content -LiteralPath '%~f0') -join \"`n\")"
+exit /b
+:>
 
-echo.
-echo ==========================================
-echo    MENU MODERNO RESTAURADO
-echo ==========================================
-echo Prueba el clic derecho ahora.
-pause
+# ===========================================================================
+#  ZONA POWERSHELL (AQUI EMPIEZA LA LOGICA REAL)
+# ===========================================================================
+$Host.UI.RawUI.WindowTitle = "[EL NEXO] Motor Hibrido Activo"
+Write-Host "   [CORE] Cargando modulos del sistema..." -ForegroundColor Cyan
+
+# 1. Restore Menu Key
+Write-Host "`n   [1/2] Eliminando parche de registro..." -ForegroundColor Yellow
+$key = "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"
+if (Test-Path $key) {
+    Remove-Item -Path $key -Recurse -Force -ErrorAction SilentlyContinue
+}
+Write-Host "   [OK] Diseño original restaurado." -ForegroundColor Green
+
+# 2. Restart Explorer
+Write-Host "`n   [2/2] Reiniciando Explorador..." -ForegroundColor Yellow
+Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
+Start-Process explorer
+Write-Host "   [OK] Explorador reiniciado." -ForegroundColor Green
+
+Write-Host "`n   ======================================================" -ForegroundColor Cyan
+Write-Host "      MENU MODERNO RESTAURADO" -ForegroundColor Cyan
+Write-Host "   ======================================================" -ForegroundColor Cyan
+Write-Host "   Prueba el clic derecho ahora." -ForegroundColor Yellow
+
+Write-Host "   [EXITO] Operacion finalizada." -ForegroundColor Green
+Write-Host "   Presiona cualquier tecla para salir..."
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
