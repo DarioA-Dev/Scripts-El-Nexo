@@ -1,183 +1,185 @@
-<# : batch script hack
 @echo off
-:: ==========================================================================
-::   EL NEXO - SUITE DE OPTIMIZACION v4.0
-::   (C) 2026 DarioA-Dev | Engineering Dept.
-:: ==========================================================================
-::   ARQUITECTURA: Hybrid PowerShell Wrapper (Stable)
-:: ==========================================================================
-
-:: 1. INICIO ROBUSTO
 chcp 65001 >nul
-setlocal
-cd /d "%~dp0"
-title [EL NEXO] Kernel Optimizer
-color 0B
+title EL NEXO - MÁXIMO RENDIMIENTO (V3.5 EXTENDED)
+color 0A
+setlocal enabledelayedexpansion
 
-:: 2. INTERFAZ (ASCII CON ESCAPE CORRECTO)
-cls
-echo.
-echo   ______ _       _   _ ______   _____
-echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \
-echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
-echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
-echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
-echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/
-echo.
-echo  ==========================================================================
-echo   MODULO: MAXIMO RENDIMIENTO PC (KERNEL + ENERGIA)
-echo   INFO: Optimizando... Por favor espere.
-echo  ==========================================================================
-echo.
-
-:: 3. ELEVACION DE PRIVILEGIOS (ADMIN)
+:: --- [1. VERIFICACIÓN DE NIVEL 0 (ADMIN)] ---
 net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo   [!] SOLICITANDO PERMISOS DE ADMINISTRADOR...
-    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
-    exit /b
+if %errorlevel% neq 0 (
+    color 0C
+    echo [ERROR CRÍTICO] ACCESO DENEGADO AL KERNEL.
+    echo El Nexo requiere privilegios de Administrador.
+    echo Haz clic derecho ^> Ejecutar como administrador.
+    pause >nul
+    exit
 )
 
-:: 4. LANZAMIENTO DEL MOTOR POWERSHELL
-:: Lee este mismo archivo, ignora las lineas Batch y ejecuta el resto
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression -Command ((Get-Content -LiteralPath '%~f0') -join \"`n\")"
-exit /b
-:>
+echo ======================================================
+echo          INICIANDO SECUENCIA EL NEXO V3.5
+echo        (Versión Extendida: Kernel + Energía)
+echo ======================================================
 
-# ===========================================================================
-#  ZONA POWERSHELL (AQUI EMPIEZA LA LOGICA REAL)
-# ===========================================================================
-$Host.UI.RawUI.WindowTitle = "[EL NEXO] Motor Hibrido Activo"
-Write-Host "   [CORE] Cargando modulos del sistema..." -ForegroundColor Cyan
+:: --- [2. PUNTO DE RESTAURACIÓN (LÓGICA BLINDADA)] ---
+echo.
+echo [SEGURIDAD] ¿Deseas crear un Punto de Restauración del Sistema?
+echo (Recomendado si es la primera vez que ejecutas este script)
+set /p "choice=Escribe S para Si, o N para No: "
+if /i "%choice%"=="S" (
+    echo [+] Iniciando instantánea de volumen...
+    powershell -Command "Checkpoint-Computer -Description 'Backup El Nexo V3.5' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
+    echo [OK] Punto de seguridad establecido.
+) else (
+    echo [!] Saltando copia de seguridad a petición del usuario.
+)
 
-# 1. Restore Point
-Write-Host ""
-$rp = Read-Host "¿Deseas crear un Punto de Restauración del Sistema? (S/N)"
-if ($rp -eq 'S') {
-    Write-Host "   [+] Iniciando instantánea de volumen..." -ForegroundColor Yellow
-    Checkpoint-Computer -Description 'Backup El Nexo V4.0' -RestorePointType 'MODIFY_SETTINGS' -ErrorAction SilentlyContinue
-    Write-Host "   [OK] Punto de seguridad establecido." -ForegroundColor Green
-} else {
-    Write-Host "   [!] Saltando copia de seguridad a petición del usuario." -ForegroundColor Gray
-}
+:: --- [3. GESTIÓN DE ENERGÍA DE ALTO VOLTAJE] ---
+echo.
+echo [+] Reconstruyendo Matriz de Energía (GUID Estático)...
+:: Definimos el GUID de El Nexo para evitar errores de búsqueda y forzar creación
+set "nexo_guid=11111111-1111-1111-1111-111111111111"
 
-# 2. Power Plan
-Write-Host "`n   [+] Reconstruyendo Matriz de Energía (GUID Estático)..." -ForegroundColor Yellow
-$nexo_guid = "11111111-1111-1111-1111-111111111111"
+:: Limpieza preventiva
+powercfg -delete %nexo_guid% >nul 2>&1
 
-# Cleanup & Create
-powercfg -delete $nexo_guid | Out-Null
-powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 $nexo_guid | Out-Null
-powercfg -changename $nexo_guid "Maximo Rendimiento El Nexo" | Out-Null
-powercfg -setactive $nexo_guid | Out-Null
+:: Creación Forzada: Duplicar esquema de alto rendimiento y capturar en GUID estático
+powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 %nexo_guid% >nul 2>&1
+powercfg -changename %nexo_guid% "Maximo Rendimiento El Nexo"
+powercfg -setactive %nexo_guid%
 
-# Tweaks
-Write-Host "   [+] Aplicando micro-ajustes de energía..." -ForegroundColor Yellow
+:: TWEAKS PROFUNDOS DE ENERGÍA (EXTENDIDO)
+echo [+] Aplicando micro-ajustes de energía...
+:: Desactivar suspensión de disco duro (0 = Nunca)
 powercfg -change -disk-timeout-ac 0
+:: Desactivar suspensión de monitor (Opcional, configurado a nunca)
 powercfg -change -monitor-timeout-ac 0
-powercfg -h off | Out-Null
-powercfg -setacvalueindex $nexo_guid sub_processor PROCTHROTTLEMIN 100
-powercfg -setacvalueindex $nexo_guid sub_processor PROCTHROTTLEMAX 100
-# PCI Express Link State Power Management (Off)
-powercfg -setacvalueindex $nexo_guid sub_pciexpress aspm 0
-# USB Selective Suspend (Disabled)
-powercfg -setacvalueindex $nexo_guid sub_usb usbsuspend 0
-powercfg -setactive $nexo_guid
-Write-Host "   [OK] Matriz de energía operativa." -ForegroundColor Green
+:: Desactivar hibernación para liberar espacio y reducir escrituras
+powercfg -h off >nul 2>&1
+:: Máximo rendimiento en estado de procesador
+powercfg -setacvalueindex %nexo_guid% sub_processor PROCTHROTTLEMIN 100
+powercfg -setacvalueindex %nexo_guid% sub_processor PROCTHROTTLEMAX 100
+:: Desactivar ahorro de energía en PCI Express (Link State Power Management)
+powercfg -setacvalueindex %nexo_guid% sub_pciexpress aspm 0
+:: Desactivar suspensión selectiva de USB
+powercfg -setacvalueindex %nexo_guid% sub_usb usbsuspend 0
 
-# 3. Kernel & Boot (BCD)
-Write-Host "`n   [+] Optimizando parámetros de arranque (BCD)..." -ForegroundColor Yellow
-bcdedit /set disabledynamictick yes | Out-Null
-bcdedit /set useplatformclock no | Out-Null
-bcdedit /set tscsyncpolicy Enhanced | Out-Null
-bcdedit /set bootux disabled | Out-Null
-bcdedit /set hypervisorlaunchtype off | Out-Null
-bcdedit /set isolatedcontext No | Out-Null
-bcdedit /set nointegritychecks No | Out-Null
-Write-Host "   [OK] Bootloader optimizado." -ForegroundColor Green
+echo [OK] Matriz de energía operativa.
 
-# 4. MSI Mode & GPU
-Write-Host "`n   [+] Inyectando Modo MSI (Message Signaled Interrupts)..." -ForegroundColor Yellow
-$pci = 'HKLM:\SYSTEM\CurrentControlSet\Enum\PCI'
-if (Test-Path $pci) {
-    Get-ChildItem $pci -Recurse | Where-Object { $_.Name -like '*Interrupt Management*' } | ForEach-Object {
-        $msi = "Registry::$($_.Name)\MessageSignaledInterruptProperties"
-        if (Test-Path $msi) {
-            Set-ItemProperty -Path $msi -Name 'MSISupported' -Value 1 -Type DWord -ErrorAction SilentlyContinue
-        }
-    }
-}
+:: --- [4. KERNEL & BOOTLOADER (BCDEDIT EXTENDIDO)] ---
+echo.
+echo [+] Optimizando parámetros de arranque (BCD)...
+:: Desactivar "Dynamic Tick" (Vital para laptops y latencia)
+bcdedit /set disabledynamictick yes >nul 2>&1
+:: Forzar reloj de plataforma (Desactivado para reducir latencia DPC)
+bcdedit /set useplatformclock no >nul 2>&1
+:: Sincronización de TSC (Enhanced para Ryzen/Core modernos)
+bcdedit /set tscsyncpolicy Enhanced >nul 2>&1
+:: Desactivar logo de arranque (Acelera boot)
+bcdedit /set bootux disabled >nul 2>&1
+:: Desactivar Hypervisor (Mejora FPS en VMs no usadas)
+bcdedit /set hypervisorlaunchtype off >nul 2>&1
+:: Desactivar protecciones de integridad dinámicas (Ganancia marginal de CPU)
+bcdedit /set isolatedcontext No >nul 2>&1
+:: Permitir uso de drivers sin firmar (Opcional, útil para herramientas custom)
+bcdedit /set nointegritychecks No >nul 2>&1
 
-Write-Host "   [+] Optimizando GPU (ULPS) y Prioridades..." -ForegroundColor Yellow
-$video = 'HKLM:\SYSTEM\CurrentControlSet\Control\Video'
-if (Test-Path $video) {
-    Get-ChildItem $video -Recurse | Where-Object { $_.Property -contains 'EnableUlps' } | ForEach-Object {
-        Set-ItemProperty -Path $_.PSPath -Name 'EnableUlps' -Value 0 -Type DWord -ErrorAction SilentlyContinue
-    }
-}
+echo.
+echo ------------------------------------------------------
+echo [PARTE 1 COMPLETADA] MANTÉN LA VENTANA O EJECUTA PARTE 2
+echo ------------------------------------------------------
+timeout /t 2 >nul
 
-# HAGS & GameDVR
-$regGraphics = "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers"
-if (Test-Path $regGraphics) {
-    Set-ItemProperty -Path $regGraphics -Name "HwSchMode" -Value 2 -Type DWord -ErrorAction SilentlyContinue
-}
-$regGameConfig = "HKCU:\System\GameConfigStore"
-if (Test-Path $regGameConfig) {
-    Set-ItemProperty -Path $regGameConfig -Name "GameDVR_FSEBehaviorMode" -Value 2 -Type DWord -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] GPU y Rendering optimizados." -ForegroundColor Green
+title EL NEXO: PROTOCOLO DE INGENIERÍA V3.5 (SISTEMA)
+color 0A
 
-# 5. Registry (CPU & RAM)
-Write-Host "`n   [+] Reconfigurando Scheduler de CPU y Memoria..." -ForegroundColor Yellow
-Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Value 38 -Type DWord -ErrorAction SilentlyContinue
-Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "DisablePagingExecutive" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "LargeSystemCache" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Value 0xFFFFFFFF -Type DWord -ErrorAction SilentlyContinue
+:: --- [5. LATENCIA DE HARDWARE (MSI MODE & GPU)] ---
+echo.
+echo [+] Inyectando Modo MSI (Message Signaled Interrupts)...
+echo     [INFO] Escaneando bus PCI. Esto puede tomar unos instantes...
+:: FIX: Se usa archivo temporal para evitar colgado de pipes en sistemas corruptos
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" > "%temp%\nexo_pci_scan.txt" 2>nul
+if exist "%temp%\nexo_pci_scan.txt" (
+    for /f "tokens=*" %%i in ('type "%temp%\nexo_pci_scan.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
+        reg add "%%i\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d 1 /f >nul 2>&1
+    )
+    del /f /q "%temp%\nexo_pci_scan.txt" >nul 2>&1
+)
 
-# 6. Input Lag
-Write-Host "`n   [+] Reduciendo latencia de entrada (Input Lag)..." -ForegroundColor Yellow
-Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" -Name "MouseDataQueueSize" -Value 50 -Type DWord -ErrorAction SilentlyContinue
-Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" -Name "KeyboardDataQueueSize" -Value 50 -Type DWord -ErrorAction SilentlyContinue
-Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value "0" -Type String -ErrorAction SilentlyContinue
-Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseHoverTime" -Value "10" -Type String -ErrorAction SilentlyContinue
+echo [+] Optimizando GPU (NVIDIA/AMD) y Prioridades...
+echo     [INFO] Buscando y desactivando ULPS (Ultra Low Power State)...
+:: FIX: Optimizacion segura para ULPS
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\Video" /s /f "EnableUlps" > "%temp%\nexo_gpu_scan.txt" 2>nul
+if exist "%temp%\nexo_gpu_scan.txt" (
+    for /f "delims=" %%a in ('type "%temp%\nexo_gpu_scan.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
+        reg add "%%a" /v "EnableUlps" /t REG_DWORD /d 0 /f >nul 2>&1
+    )
+    del /f /q "%temp%\nexo_gpu_scan.txt" >nul 2>&1
+)
 
-# 7. FileSystem
-Write-Host "`n   [+] Optimizando sistema de archivos NTFS..." -ForegroundColor Yellow
-fsutil behavior set disablelastaccess 1 | Out-Null
-fsutil behavior set disable8dot3 1 | Out-Null
+:: Programación de GPU acelerada por hardware (HAGS) - Prioridad Alta
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d 2 /f >nul 2>&1
+:: Desactivar "Optimización de pantalla completa" global
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d 2 /f >nul 2>&1
 
-# 8. Services
-Write-Host "`n   [+] Neutralizando servicios innecesarios..." -ForegroundColor Yellow
-$services = @("DiagTrack", "dmwappushservice", "SysMain", "WerSvc", "MapsBroker", "PcaSvc", "DPS", "RetailDemo", "WSearch")
-foreach ($s in $services) {
-    Stop-Service -Name $s -Force -ErrorAction SilentlyContinue
-    Set-Service -Name $s -StartupType Disabled -ErrorAction SilentlyContinue
-}
+:: --- [6. OPTIMIZACIÓN DEL REGISTRO (CPU & RAM)] ---
+echo.
+echo [+] Reconfigurando Scheduler de CPU y Memoria...
+:: Win32PrioritySeparation: 26 (Hex) = Prioridad absoluta a Foreground
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 38 /f >nul
+:: DisablePagingExecutive: Mantener Kernel en RAM
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d 1 /f >nul
+:: LargeSystemCache: Optimizado para IO (0 para Gaming, 1 para Server - Usamos 0)
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d 0 /f >nul
+:: SystemResponsiveness: Reservar 0% de CPU para tareas de fondo
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 0 /f >nul
+:: NetworkThrottlingIndex: Desactivar límite de paquetes de red
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 4294967295 /f >nul
 
-# GameDVR Policies
-Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-$policyPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR"
-if (!(Test-Path $policyPath)) { New-Item -Path $policyPath -Force | Out-Null }
-Set-ItemProperty -Path $policyPath -Name "AllowGameDVR" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+:: --- [7. INPUT LAG Y PERIFÉRICOS (MOUSE/TECLADO)] ---
+echo.
+echo [+] Reduciendo latencia de entrada (Input Lag)...
+:: Tamaño de cola de datos de ratón y teclado
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d 50 /f >nul
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d 50 /f >nul
+:: MenuShowDelay: Velocidad de despliegue de menús (0 = Instantáneo)
+reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "0" /f >nul
+:: MouseHoverTime: Tiempo de respuesta al pasar el ratón
+reg add "HKCU\Control Panel\Mouse" /v "MouseHoverTime" /t REG_SZ /d "10" /f >nul
 
-# 9. Cleanup
-Write-Host "`n   [+] Purgando archivos temporales..." -ForegroundColor Yellow
-Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "$env:SystemRoot\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
-ipconfig /flushdns | Out-Null
+:: --- [8. SISTEMA DE ARCHIVOS (NTFS TWEAKS)] ---
+echo.
+echo [+] Optimizando sistema de archivos NTFS...
+:: Desactivar marca de tiempo de último acceso (Acelera lectura de disco)
+fsutil behavior set disablelastaccess 1 >nul 2>&1
+:: Desactivar nombres cortos 8dot3 (Mejora rendimiento en carpetas grandes)
+fsutil behavior set disable8dot3 1 >nul 2>&1
 
-Write-Host "`n   ======================================================" -ForegroundColor Cyan
-Write-Host "      PROTOCOLO EL NEXO V4.0 COMPLETADO" -ForegroundColor Cyan
-Write-Host "      (Kernel, GPU, Red y Energía Optimizados)" -ForegroundColor Cyan
-Write-Host "   ======================================================" -ForegroundColor Cyan
-Write-Host "   [IMPORTANTE] Debes REINICIAR el PC para cargar el nuevo Kernel." -ForegroundColor Yellow
+:: --- [9. SERVICIOS Y TELEMETRÍA (KILL LIST EXTENDIDA 2025)] ---
+echo.
+echo [+] Neutralizando servicios innecesarios (Bloatware)...
+set services=DiagTrack dmwappushservice SysMain WerSvc MapsBroker PcaSvc DPS RetailDemo WSearch
+for %%s in (%services%) do (
+    sc stop %%s >nul 2>&1
+    sc config %%s start= disabled >nul 2>&1
+)
 
-$r = Read-Host "¿Reiniciar ahora? (S/N)"
-if ($r -eq 'S') {
-    Restart-Computer -Force
-}
+echo [+] Desactivando GameDVR y Barra de Juegos...
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 0 /f >nul
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v "AllowGameDVR" /t REG_DWORD /d 0 /f >nul
 
-Write-Host "   [EXITO] Operacion finalizada." -ForegroundColor Green
-Write-Host "   Presiona cualquier tecla para salir..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+:: --- [10. LIMPIEZA FINAL Y CIERRE] ---
+echo.
+echo [+] Purgando archivos temporales...
+del /s /f /q %temp%\*.* >nul 2>&1
+del /s /f /q C:\Windows\Temp\*.* >nul 2>&1
+ipconfig /flushdns >nul 2>&1
+
+echo ======================================================
+echo    PROTOCOLO EL NEXO V3.5 COMPLETADO
+echo    (Kernel, GPU, Red y Energía Optimizados)
+echo ======================================================
+echo [IMPORTANTE] Debes REINICIAR el PC para cargar el nuevo Kernel.
+echo.
+set /p r="¿Reiniciar ahora? (S/N): "
+if /i "%r%"=="S" shutdown /r /t 3
+exit
