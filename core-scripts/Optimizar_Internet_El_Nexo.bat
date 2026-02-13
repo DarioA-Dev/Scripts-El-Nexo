@@ -1,13 +1,13 @@
 @echo off
 chcp 65001 >nul
-title EL NEXO - INGENIERÍA DE RED Y BAJA LATENCIA v3.6
+title EL NEXO - OPTIMIZAR INTERNET
 color 0B
 setlocal enabledelayedexpansion
 
-:: VERIFICACIÓN DE AUTORIDAD (ADMIN)
+:: ADMIN CHECK
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [!] Error: Se requiere nivel de Administrador.
+    echo [!] Error: Se requiere Administrador.
     echo Haz clic derecho ^> Ejecutar como administrador.
     pause
     exit
@@ -15,101 +15,93 @@ if %errorlevel% neq 0 (
 
 echo ======================================================
 echo          PROTOCOLO DE RED: EL NEXO v3.6
-echo        (FASE 1: OPTIMIZACIÓN DE PROTOCOLO)
 echo ======================================================
 
-:: 1. PUNTO DE CONTROL (SEGURIDAD)
+:: PUNTO DE RESTAURACIÓN
 echo.
-set /p "rp=¿Generar punto de restauración de red? (S/N): "
+set /p "rp=¿Generar punto de restauración? (S/N): "
 if /i "%rp%"=="S" (
-    echo [+] Ejecutando instantánea de configuración...
-    powershell -Command "Checkpoint-Computer -Description 'Red El Nexo v3.6' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
-    echo [OK] Punto de control generado.
+    echo [+] Creando punto de restauración...
+    wmic /namespace:\\root\default path SystemRestore call CreateRestorePoint "Red El Nexo", 100, 12 >nul 2>&1
+    echo [OK] Punto creado.
 )
 
-:: 2. OPTIMIZACIÓN DE LA PILA TCP/IP (NETSH)
+:: PILA TCP/IP
 echo.
-echo [+] Reconfigurando parámetros globales de la pila TCP...
+echo [+] Configurando TCP/IP...
 netsh int tcp set global autotuninglevel=normal >nul 2>&1
 netsh int tcp set global heuristics=disabled >nul 2>&1
 netsh int tcp set global rss=enabled >nul 2>&1
 netsh int tcp set global fastopen=enabled >nul 2>&1
 netsh int tcp set global timestamps=disabled >nul 2>&1
 netsh int tcp set global ecncapability=disabled >nul 2>&1
-:: Establecer proveedor de congestión moderno (CUBIC)
 netsh int tcp set supplemental template=internet congestionprovider=cubic >nul 2>&1
-echo [OK] Pila TCP/IP optimizada para alta velocidad y baja pérdida.
+echo [OK] TCP/IP optimizado.
 
-:: 3. ELIMINACIÓN DE ESTRANGULAMIENTO (THROTTLING)
+:: THROTTLING
 echo.
-echo [+] Ajustando índices de respuesta del sistema...
+echo [+] Eliminando throttling...
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 4294967295 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 0 /f >nul 2>&1
-echo [OK] Restricciones de red multimedia desactivadas.
+echo [OK] Throttling eliminado.
 
-timeout /t 2 >nul
-
-title EL NEXO: INGENIERÍA DE RED [FASE 2]
-color 0B
-
-:: 4. MODO MSI DINÁMICO (POWERSHELL BYPASS)
+:: MSI MODE (SIN POWERSHELL)
 echo.
-echo [+] Sincronizando Modo MSI en controladores de red...
-:: Método de archivo temporal más robusto
-reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" > "%temp%\nexo_msi_net.txt" 2>nul
-if exist "%temp%\nexo_msi_net.txt" (
-    for /f "tokens=*" %%i in ('type "%temp%\nexo_msi_net.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
+echo [+] Activando MSI en controladores...
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" > "%temp%\msi_net.txt" 2>nul
+if exist "%temp%\msi_net.txt" (
+    for /f "tokens=*" %%i in ('type "%temp%\msi_net.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
         reg add "%%i\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d 1 /f >nul 2>&1
     )
-    del /f /q "%temp%\nexo_msi_net.txt" >nul 2>&1
+    del /f /q "%temp%\msi_net.txt" >nul 2>&1
 )
-echo [OK] Interrupciones de hardware optimizadas (Latencia reducida).
+echo [OK] MSI activado.
 
-:: 5. NAGLE'S ALGORITHM (TCP ACK FREQUENCY)
-echo [+] Aplicando TcpAckFrequency a interfaces activas...
-:: Método de registro directo más compatible
+:: TCP ACK FREQUENCY (SIN POWERSHELL)
+echo.
+echo [+] Aplicando TcpAckFrequency...
 for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" 2^>nul') do (
     reg add "%%a" /v "TcpAckFrequency" /t REG_DWORD /d 1 /f >nul 2>&1
     reg add "%%a" /v "TCPNoDelay" /t REG_DWORD /d 1 /f >nul 2>&1
 )
-echo [OK] Confirmación instantánea de paquetes activada.
+echo [OK] ACK Frequency configurado.
 
-:: 6. PROTOCOLO HÍBRIDO (WI-FI / PORTÁTIL)
+:: WI-FI POWER MANAGEMENT
 echo.
-set /p "laptop=¿El sistema es un Portátil o usa Wi-Fi? (S/N): "
+set /p "laptop=¿Sistema portátil o Wi-Fi? (S/N): "
 if /i "%laptop%"=="S" (
-    echo [+] Desactivando gestión de energía en adaptadores inalámbricos...
-    :: Método de registro más compatible
+    echo [+] Desactivando ahorro de energía Wi-Fi...
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\0000" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\0001" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
-    echo [OK] Ahorro de energía Wi-Fi neutralizado.
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\0002" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
+    echo [OK] Wi-Fi optimizado.
 )
 
-:: 7. DNS TURBO (OPCIONAL)
+:: DNS CLOUDFLARE
 echo.
-set /p "dns=¿Deseas inyectar DNS de Cloudflare (1.1.1.1)? (S/N): "
+set /p "dns=¿Configurar DNS Cloudflare (1.1.1.1)? (S/N): "
 if /i "%dns%"=="S" (
-    echo [+] Configurando servidores DNS primarios y secundarios...
-    :: Método netsh más compatible
+    echo [+] Configurando DNS...
     netsh interface ip set dns "Ethernet" static 1.1.1.1 primary >nul 2>&1
     netsh interface ip add dns "Ethernet" 1.0.0.1 index=2 >nul 2>&1
     netsh interface ip set dns "Wi-Fi" static 1.1.1.1 primary >nul 2>&1
     netsh interface ip add dns "Wi-Fi" 1.0.0.1 index=2 >nul 2>&1
-    echo [OK] DNS de alta velocidad establecido.
+    echo [OK] DNS configurado.
 )
 
-:: 8. PURGA FINAL
+:: PURGA FINAL
 echo.
-echo [AVISO] Se ejecutará un reinicio de la configuración IP.
-echo         Es posible que experimentes una micro-desconexión temporal.
-echo [+] Reiniciando caché de resolución y sockets...
+echo [AVISO] Se ejecutará reset de IP.
+echo         Posible micro-desconexión temporal.
+echo [+] Reiniciando red...
 ipconfig /flushdns >nul 2>&1
 netsh winsock reset >nul 2>&1
 netsh int ip reset >nul 2>&1
 
+echo.
 echo ======================================================
-echo    PROTOCOLO COMPLETADO. SISTEMA SINCRONIZADO.
+echo    PROTOCOLO COMPLETADO
 echo ======================================================
-set /p "r=¿Deseas reiniciar ahora para aplicar cambios? (S/N): "
+set /p "r=¿Reiniciar ahora? (S/N): "
 if /i "%r%"=="S" shutdown /r /t 5
 exit
