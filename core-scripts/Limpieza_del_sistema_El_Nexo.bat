@@ -1,111 +1,182 @@
 @echo off
-:: ==========================================================
-::   EL NEXO - INGENIERÍA DE MANTENIMIENTO v3.6
-::   Protocolo: Limpieza Forense y Purga de Componentes
-:: ==========================================================
+:: =========================================================================
+::   EL NEXO - LIMPIEZA PROFUNDA DEL SISTEMA v4.0
+::   Protocolo: Purga de Componentes y Optimizacion de Disco
+:: =========================================================================
 chcp 65001 >nul
 setlocal enabledelayedexpansion
-title EL NEXO: SYSTEM CLEANER v3.6
-color 0A
+title EL NEXO v4.0 - LIMPIEZA DEL SISTEMA
+color 0B
 
-:: 1. VERIFICACIÓN DE AUTORIDAD (ADMIN)
-net session >nul 2>&1
+:: VERIFICACION DE PRIVILEGIOS
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
+    cls
     color 0C
     echo.
-    echo   [ERROR] SE REQUIEREN PRIVILEGIOS DE ADMINISTRADOR.
-    pause >nul
-    exit
+    echo  ============================================================
+    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
+    echo  ============================================================
+    echo.
+    echo   Haz clic derecho sobre el archivo y selecciona:
+    echo   "Ejecutar como administrador"
+    echo.
+    echo  ============================================================
+    pause
+    exit /b
 )
 
-:: 2. CABECERA ASCII "EL NEXO"
+:: CABECERA CIBERPUNK "EL NEXO"
 cls
+color 0B
 echo.
-echo   ______ _       _   _ ______   _____ 
-echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \ 
-echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
-echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
-echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
-echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/ 
+echo  ============================================================
+echo      _____ _       _   _ _______   _______  
+echo     ^|  ___^| ^|     ^| \ ^| ^|  ___\ \ / /  _ \ 
+echo     ^| ^|__ ^| ^|     ^|  \^| ^| ^|__  \ V /^| ^| ^| ^|
+echo     ^|  __^|^| ^|     ^| . ` ^|  __^|  ^> ^< ^| ^| ^| ^|
+echo     ^| ^|___^| ^|____ ^| ^|\  ^| ^|___ / . \^| ^|_^| ^|
+echo     ^|_____^|______^|_^| \_^|_____/_/ \_\_____/ 
 echo.
-echo  ==========================================================
-echo   PROTOCOLO: LIMPIEZA FORENSE DE SISTEMA (V3.6)
-echo   ESTADO: Escaneando residuos de disco...
-echo  ==========================================================
+echo  ============================================================
+echo   PROTOCOLO: LIMPIEZA PROFUNDA [LIBERACION DE ESPACIO]
+echo   VERSION: 4.0 ENHANCED - Estado: Iniciando secuencia...
+echo  ============================================================
 echo.
 
-:: 3. PUNTO DE CONTROL
-echo [SEGURIDAD] ¿Deseas generar un Punto de Control de Limpieza?
-set /p "backup=Tu respuesta (S/N): "
+:: PUNTO DE CONTROL
+echo  [PASO 1/8] Creando punto de restauracion de seguridad...
+echo.
+set /p "backup= Deseas crear un respaldo antes de continuar? (S/N): "
 if /i "%backup%"=="S" (
     echo.
-    echo [+] Creando respaldo de configuración...
-    powershell -Command "Checkpoint-Computer -Description 'Limpieza El Nexo v3.6' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
-    echo [OK] Punto establecido.
+    echo  [*] Generando punto de restauracion del sistema...
+    powershell -Command "Checkpoint-Computer -Description 'El Nexo v4.0 Limpieza' -RestorePointType 'MODIFY_SETTINGS'" 2>nul
+    if !errorlevel! equ 0 (
+        echo  [OK] Punto de restauracion creado correctamente.
+    ) else (
+        echo  [!] No se pudo crear el punto. Continuando de todos modos...
+    )
+) else (
+    echo  [!] Saltando respaldo por decision del usuario.
 )
 
-:: 4. OPTIMIZACIÓN DE COMPONENTES (EL MÁS FUERTE)
+:: COMPONENT STORE CLEANUP
 echo.
-echo =========================================================================
-echo  [AVISO] Iniciando purga del Almacén de Componentes (WinSxS).
-echo  ESTE PROCESO ES ALTAMENTE INTENSIVO Y PUEDE TARDAR 10-15 MINUTOS.
-echo  Es vital para liberar Gigabytes de basura de actualizaciones antiguas.
-echo =========================================================================
+echo  [PASO 2/8] Limpiando almacen de componentes de Windows...
+echo.
+echo  ============================================================
+echo   [AVISO] Este proceso puede tardar 10-15 minutos.
+echo   Es muy importante para liberar espacio en disco.
+echo   Por favor, se paciente...
+echo  ============================================================
+echo.
 dism /online /cleanup-image /startcomponentcleanup /resetbase
-echo [OK] Almacén de componentes optimizado y compactado.
+echo  [OK] Componentes antiguos eliminados correctamente.
 
-:: 5. WINDOWS UPDATE & SOFTWARE DISTRIBUTION
+:: WINDOWS UPDATE CACHE
 echo.
-echo [+] Deteniendo servicios para purga de repositorio de Update...
+echo  [PASO 3/8] Limpiando cache de Windows Update...
+echo.
 net stop wuauserv >nul 2>&1
 net stop bits >nul 2>&1
-if exist %windir%\SoftwareDistribution\Download (
-    del /s /f /q %windir%\SoftwareDistribution\Download\*.* >nul 2>&1
-    rd /s /q %windir%\SoftwareDistribution\Download >nul 2>&1
-    mkdir %windir%\SoftwareDistribution\Download >nul 2>&1
+timeout /t 2 /nobreak >nul
+
+if exist "%windir%\SoftwareDistribution\Download" (
+    echo  [*] Eliminando archivos de actualizacion antiguos...
+    del /s /f /q "%windir%\SoftwareDistribution\Download\*.*" >nul 2>&1
+    for /d %%D in ("%windir%\SoftwareDistribution\Download\*") do rd /s /q "%%D" >nul 2>&1
 )
+
 net start wuauserv >nul 2>&1
 net start bits >nul 2>&1
-echo [OK] Caché de Windows Update purgada satisfactoriamente.
+echo  [OK] Cache de actualizaciones eliminada.
 
-:: 6. PURGA MASIVA DE TEMPORALES
+:: TEMPORARY FILES
 echo.
-echo [+] Ejecutando limpieza forense de directorios volátiles...
-del /s /f /q %temp%\*.* >nul 2>&1
-for /d %%D in (%temp%\*) do rd /s /q "%%D" >nul 2>&1
-del /s /f /q %windir%\Temp\*.* >nul 2>&1
-for /d %%D in (%windir%\Temp\*) do rd /s /q "%%D" >nul 2>&1
-if exist %windir%\Prefetch (
-    del /s /f /q %windir%\Prefetch\*.* >nul 2>&1
+echo  [PASO 4/8] Eliminando archivos temporales...
+echo.
+echo  [*] Limpiando carpetas de usuario y sistema...
+del /s /f /q "%temp%\*.*" >nul 2>&1
+for /d %%D in ("%temp%\*") do rd /s /q "%%D" >nul 2>&1
+del /s /f /q "%windir%\Temp\*.*" >nul 2>&1
+for /d %%D in ("%windir%\Temp\*") do rd /s /q "%%D" >nul 2>&1
+
+if exist "%windir%\Prefetch" (
+    del /s /f /q "%windir%\Prefetch\*.*" >nul 2>&1
 )
-echo [OK] Archivos temporales de sistema y usuario eliminados.
+echo  [OK] Archivos temporales eliminados.
 
-:: 7. CACHÉS DE HARDWARE & GPU
+:: GPU SHADER CACHE
 echo.
-echo [+] Purgando cachés de sombreadores (Shader Cache)...
-if exist "%LocalAppData%\NVIDIA\GLCache" rd /s /q "%LocalAppData%\NVIDIA\GLCache" >nul 2>&1
-if exist "%LocalAppData%\AMD\DxCache" rd /s /q "%LocalAppData%\AMD\DxCache" >nul 2>&1
-echo [OK] Cachés de GPU reiniciadas.
+echo  [PASO 5/8] Limpiando caches de GPU...
+echo.
+if exist "%LocalAppData%\NVIDIA\GLCache" (
+    echo  [*] Eliminando cache de NVIDIA OpenGL...
+    rd /s /q "%LocalAppData%\NVIDIA\GLCache" >nul 2>&1
+)
+if exist "%LocalAppData%\NVIDIA\DXCache" (
+    echo  [*] Eliminando cache de NVIDIA DirectX...
+    rd /s /q "%LocalAppData%\NVIDIA\DXCache" >nul 2>&1
+)
+if exist "%LocalAppData%\AMD\DxCache" (
+    echo  [*] Eliminando cache de AMD DirectX...
+    rd /s /q "%LocalAppData%\AMD\DxCache" >nul 2>&1
+)
+if exist "%LocalAppData%\AMD\GLCache" (
+    echo  [*] Eliminando cache de AMD OpenGL...
+    rd /s /q "%LocalAppData%\AMD\GLCache" >nul 2>&1
+)
+if exist "%LocalAppData%\D3DSCache" (
+    echo  [*] Eliminando cache de DirectX...
+    rd /s /q "%LocalAppData%\D3DSCache" >nul 2>&1
+)
+echo  [OK] Caches de GPU eliminadas.
 
-:: 8. REGISTROS DE EVENTOS (WEVTUTIL)
+:: EVENT LOGS
 echo.
-echo [+] Eliminando registros de eventos acumulados (Event Logs)...
-for /f "tokens=*" %%e in ('wevtutil el 2^>nul') do wevtutil cl "%%e" >nul 2>&1
-echo [OK] Historial de errores y logs del sistema borrado.
+echo  [PASO 6/8] Limpiando registros de eventos del sistema...
+echo.
+echo  [*] Eliminando logs acumulados...
+for /f "tokens=*" %%e in ('wevtutil el 2^>nul') do (
+    wevtutil cl "%%e" >nul 2>&1
+)
+echo  [OK] Registros de eventos eliminados.
 
-:: 9. CACHÉ DE INTERFAZ (EXPLORER)
+:: EXPLORER CACHE
 echo.
-echo [+] Reconstruyendo base de datos de iconos y miniaturas...
+echo  [PASO 7/8] Reconstruyendo cache del explorador...
+echo.
+echo  [*] Reiniciando interfaz de Windows...
 taskkill /f /im explorer.exe >nul 2>&1
+timeout /t 2 /nobreak >nul
 del /f /q "%LocalAppData%\IconCache.db" >nul 2>&1
 del /f /q "%LocalAppData%\Microsoft\Windows\Explorer\thumbcache_*.db" >nul 2>&1
 start explorer.exe
-echo [OK] Interfaz de usuario reiniciada y limpia.
+echo  [OK] Interfaz de usuario optimizada.
 
+:: RECYCLE BIN
 echo.
-echo ==========================================================
-echo    PROTOCOLO COMPLETADO. SISTEMA NEXO DEPURADO.
-echo ==========================================================
+echo  [PASO 8/8] Vaciando papelera de reciclaje...
+echo.
+rd /s /q %systemdrive%\$Recycle.bin >nul 2>&1
+echo  [OK] Papelera vaciada.
+
+:: FINALIZACION
+echo.
+echo  ============================================================
+echo   LIMPIEZA COMPLETADA CON EXITO
+echo  ============================================================
+echo.
+echo   Tu sistema ahora esta mas limpio y rapido.
+echo   
+echo   Espacio liberado:
+echo   - Componentes antiguos eliminados
+echo   - Archivos temporales borrados
+echo   - Caches de GPU limpiadas
+echo   - Logs del sistema vaciados
+echo.
+echo  ============================================================
 echo.
 pause
 exit

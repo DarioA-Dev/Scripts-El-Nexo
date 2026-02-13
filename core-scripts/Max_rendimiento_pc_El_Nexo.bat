@@ -1,157 +1,215 @@
 @echo off
 :: =========================================================================
-::   EL NEXO - INGENIERÍA DE RENDIMIENTO EXTREMO v3.6 (CORE-PC)
-::   Protocolo: Kernel, Energía, Latencia de Hardware y GPU
+::   EL NEXO - SISTEMA DE OPTIMIZACION AVANZADA v4.0 (CORE-PC)
+::   Protocolo: Kernel, Energia, Latencia de Hardware y GPU
 :: =========================================================================
 chcp 65001 >nul
 setlocal enabledelayedexpansion
-title EL NEXO: KERNEL OPTIMIZER v3.6
-color 0A
+title EL NEXO v4.0 - OPTIMIZADOR DE KERNEL
+color 0B
 
-:: 1. VERIFICACIÓN DE NIVEL DE AUTORIDAD (ADMIN)
-net session >nul 2>&1
+:: VERIFICACION DE PRIVILEGIOS
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
+    cls
     color 0C
     echo.
-    echo   [ERROR CRÍTICO] SE REQUIERE ACCESO AL KERNEL.
-    echo   Por favor, ejecuta este script como ADMINISTRADOR.
-    echo   Haz clic derecho ^> Ejecutar como administrador.
+    echo  ============================================================
+    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
+    echo  ============================================================
     echo.
-    pause >nul
-    exit
+    echo   Haz clic derecho sobre el archivo y selecciona:
+    echo   "Ejecutar como administrador"
+    echo.
+    echo  ============================================================
+    pause
+    exit /b
 )
 
-:: 2. CABECERA ASCII "EL NEXO"
+:: CABECERA CIBERPUNK "EL NEXO"
 cls
+color 0B
 echo.
-echo   ______ _       _   _ ______   _____ 
-echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \ 
-echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
-echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
-echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
-echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/ 
+echo  ============================================================
+echo      _____ _       _   _ _______   _______  
+echo     ^|  ___^| ^|     ^| \ ^| ^|  ___\ \ / /  _ \ 
+echo     ^| ^|__ ^| ^|     ^|  \^| ^| ^|__  \ V /^| ^| ^| ^|
+echo     ^|  __^|^| ^|     ^| . ` ^|  __^|  ^> ^< ^| ^| ^| ^|
+echo     ^| ^|___^| ^|____ ^| ^|\  ^| ^|___ / . \^| ^|_^| ^|
+echo     ^|_____^|______^|_^| \_^|_____/_/ \_\_____/ 
 echo.
-echo  =========================================================================
-echo   PROTOCOLO: MÁXIMO RENDIMIENTO PC (V3.6 EXTENDED)
-echo   ESTADO: Listo para inyección de parámetros de bajo nivel.
-echo  =========================================================================
+echo  ============================================================
+echo   PROTOCOLO: OPTIMIZACION MAXIMA DE SISTEMA [PC ESCRITORIO]
+echo   VERSION: 4.0 ENHANCED - Estado: Iniciando secuencia...
+echo  ============================================================
 echo.
 
-:: 3. PUNTO DE CONTROL DE INGENIERÍA (RESTORE POINT)
-echo [SEGURIDAD] ¿Deseas generar un Punto de Control de Ingeniería?
-echo ^(Muy recomendado antes de modificar parámetros de Kernel^)
-set /p "backup=Presiona S para crear, o N para saltar: "
+:: PUNTO DE CONTROL
+echo  [PASO 1/10] Creando punto de restauracion de seguridad...
+echo.
+set /p "backup= Deseas crear un respaldo antes de continuar? (S/N): "
 if /i "%backup%"=="S" (
     echo.
-    echo [+] Iniciando instantánea de volumen mediante PowerShell...
-    powershell -Command "Checkpoint-Computer -Description 'El Nexo Core Opt v3.6' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
-    echo [OK] Punto de seguridad establecido.
+    echo  [*] Generando punto de restauracion del sistema...
+    powershell -Command "Checkpoint-Computer -Description 'El Nexo v4.0 Max PC' -RestorePointType 'MODIFY_SETTINGS'" 2>nul
+    if !errorlevel! equ 0 (
+        echo  [OK] Punto de restauracion creado correctamente.
+    ) else (
+        echo  [!] No se pudo crear el punto. Continuando de todos modos...
+    )
 ) else (
-    echo.
-    echo [!] ADVERTENCIA: Saltando copia de seguridad a petición del usuario.
+    echo  [!] Saltando respaldo por decision del usuario.
 )
 
-:: 4. MATRIZ DE ENERGÍA DE ALTO VOLTAJE
+:: PLAN DE ENERGIA PERSONALIZADO MEJORADO
 echo.
-echo [+] Reconstruyendo Matriz de Energía (GUID Estático)...
+echo  [PASO 2/10] Creando plan de energia de maxima potencia...
+echo.
 set "nexo_guid=11111111-1111-1111-1111-111111111111"
 powercfg -delete %nexo_guid% >nul 2>&1
-powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 %nexo_guid% >nul 2>&1
-powercfg -changename %nexo_guid% "Maximo Rendimiento El Nexo"
+powercfg -duplicatescheme 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c %nexo_guid% >nul 2>&1
+powercfg -changename %nexo_guid% "Maximo Rendimiento El Nexo" "Plan optimizado para gaming y rendimiento extremo" >nul 2>&1
 powercfg -setactive %nexo_guid%
-:: Tweaks internos de energía
+
+:: Configuracion avanzada del plan
+echo  [*] Configurando parametros de energia avanzados...
 powercfg -change -disk-timeout-ac 0 >nul 2>&1
 powercfg -change -monitor-timeout-ac 0 >nul 2>&1
+powercfg -change -standby-timeout-ac 0 >nul 2>&1
 powercfg -h off >nul 2>&1
+
+:: CPU al 100%
 powercfg -setacvalueindex %nexo_guid% sub_processor PROCTHROTTLEMIN 100 >nul 2>&1
 powercfg -setacvalueindex %nexo_guid% sub_processor PROCTHROTTLEMAX 100 >nul 2>&1
-powercfg -setacvalueindex %nexo_guid% sub_pciexpress aspm 0 >nul 2>&1
-powercfg -setacvalueindex %nexo_guid% sub_usb usbsuspend 0 >nul 2>&1
-echo [OK] Esquema de energía forzado a máximo rendimiento.
+powercfg -setacvalueindex %nexo_guid% sub_processor PERFBOOSTMODE 2 >nul 2>&1
 
-:: 5. OPTIMIZACIÓN DE KERNEL & BOOTLOADER (BCDEDIT)
+:: PCI Express sin ahorro
+powercfg -setacvalueindex %nexo_guid% sub_pciexpress aspm 0 >nul 2>&1
+
+:: USB sin suspension
+powercfg -setacvalueindex %nexo_guid% sub_usb usbsuspend 0 >nul 2>&1
+
+:: Desactivar parking de nucleos
+powercfg -setacvalueindex %nexo_guid% sub_processor CPMINCORES 100 >nul 2>&1
+
+echo  [OK] Plan "Maximo Rendimiento El Nexo" activado.
+
+:: KERNEL & BOOTLOADER
 echo.
-echo [+] Reconfigurando parámetros de arranque (BCD)...
+echo  [PASO 3/10] Optimizando parametros de arranque del sistema...
+echo.
 bcdedit /set disabledynamictick yes >nul 2>&1
 bcdedit /set useplatformclock no >nul 2>&1
 bcdedit /set tscsyncpolicy Enhanced >nul 2>&1
 bcdedit /set bootux disabled >nul 2>&1
 bcdedit /set hypervisorlaunchtype off >nul 2>&1
-bcdedit /set isolatedcontext No >nul 2>&1
-bcdedit /set nointegritychecks No >nul 2>&1
-echo [OK] Latencia de kernel reducida significativamente.
+bcdedit /set x2apicpolicy Enable >nul 2>&1
+echo  [OK] Kernel configurado para minima latencia.
 
-:: 6. LATENCIA DE HARDWARE (MODO MSI & GPU)
+:: MODO MSI (Message Signaled Interrupts)
 echo.
-echo [+] Inyectando Modo MSI (Message Signaled Interrupts)...
-echo     [INFO] Escaneando controladores... Esto puede tardar unos segundos.
-reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" > "%temp%\nexo_msi.txt" 2>nul
-if exist "%temp%\nexo_msi.txt" (
-    for /f "tokens=*" %%i in ('type "%temp%\nexo_msi.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
+echo  [PASO 4/10] Activando MSI Mode en dispositivos PCI...
+echo.
+set "msi_temp=%temp%\nexo_msi_%random%.txt"
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" >"%msi_temp%" 2>nul
+if exist "%msi_temp%" (
+    echo  [*] Escaneando controladores PCI...
+    for /f "tokens=*" %%i in ('type "%msi_temp%" ^| findstr /I "HKEY_LOCAL_MACHINE"') do (
         reg add "%%i\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d 1 /f >nul 2>&1
     )
-    del /f /q "%temp%\nexo_msi.txt" >nul 2>&1
+    del /f /q "%msi_temp%" >nul 2>&1
+    echo  [OK] MSI Mode activado en GPU, red y almacenamiento.
 )
-echo [OK] Interrupciones sincronizadas prioritariamente.
 
+:: GPU SCHEDULING & ULPS
 echo.
-echo [+] Optimizando Motor Gráfico (HAGS & ULPS)...
-:: Hardware Accelerated GPU Scheduling (Prioridad 2 = ON)
+echo  [PASO 5/10] Optimizando sistema grafico...
+echo.
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d 2 /f >nul 2>&1
-:: Desactivar ULPS (Ahorro de energía en GPU)
-reg query "HKLM\SYSTEM\CurrentControlSet\Control\Video" /s /f "EnableUlps" > "%temp%\nexo_gpu.txt" 2>nul
-if exist "%temp%\nexo_gpu.txt" (
-    for /f "delims=" %%a in ('type "%temp%\nexo_gpu.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Scheduler" /v "EnablePreemption" /t REG_DWORD /d 0 /f >nul 2>&1
+
+set "gpu_temp=%temp%\nexo_gpu_%random%.txt"
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\Video" /s /f "EnableUlps" >"%gpu_temp%" 2>nul
+if exist "%gpu_temp%" (
+    for /f "tokens=*" %%a in ('type "%gpu_temp%" ^| findstr /I "HKEY_LOCAL_MACHINE"') do (
         reg add "%%a" /v "EnableUlps" /t REG_DWORD /d 0 /f >nul 2>&1
     )
-    del /f /q "%temp%\nexo_gpu.txt" >nul 2>&1
+    del /f /q "%gpu_temp%" >nul 2>&1
 )
-echo [OK] Sistema gráfico configurado para FPS estables.
+echo  [OK] GPU configurada para FPS estables y sin throttling.
 
-:: 7. AJUSTES PROFUNDOS DE REGISTRO (CPU & RAM)
+:: CPU & RAM OPTIMIZATIONS
 echo.
-echo [+] Inyectando optimizaciones de memoria y scheduler...
+echo  [PASO 6/10] Ajustando prioridades de CPU y memoria...
+echo.
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 38 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d 0 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 0 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 4294967295 /f >nul 2>&1
-echo [OK] Jerarquía de CPU y RAM alineada para gaming.
+echo  [OK] Memoria y procesador priorizados para gaming.
 
-:: 8. LATENCIA DE ENTRADA (INPUT LAG)
+:: INPUT LAG REDUCTION
 echo.
-echo [+] Minimizando Input Lag (Ratón y Teclado)...
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d 50 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d 50 /f >nul 2>&1
+echo  [PASO 7/10] Reduciendo latencia de entrada...
+echo.
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d 20 /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d 20 /f >nul 2>&1
 reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "0" /f >nul 2>&1
-reg add "HKCU\Control Panel\Mouse" /v "MouseHoverTime" /t REG_SZ /d "10" /f >nul 2>&1
-echo [OK] Tiempo de respuesta de periféricos optimizado.
+reg add "HKCU\Control Panel\Mouse" /v "MouseHoverTime" /t REG_SZ /d "8" /f >nul 2>&1
+echo  [OK] Respuesta de raton y teclado optimizada.
 
-:: 9. SISTEMA DE ARCHIVOS (NTFS)
+:: FILESYSTEM OPTIMIZATIONS
 echo.
-echo [+] Optimizando acceso a disco NTFS...
+echo  [PASO 8/10] Acelerando sistema de archivos...
+echo.
 fsutil behavior set disablelastaccess 1 >nul 2>&1
 fsutil behavior set disable8dot3 1 >nul 2>&1
-echo [OK] Lectura de archivos acelerada.
+fsutil behavior set memoryusage 2 >nul 2>&1
+echo  [OK] Lectura y escritura de disco mejoradas.
 
-:: 10. BLOATWARE & SERVICIOS (NEUTRALIZACIÓN)
+:: GAME PRIORITY
 echo.
-echo [+] Neutralizando servicios de fondo y telemetría...
+echo  [PASO 9/10] Configurando prioridad de juegos...
+echo.
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "GPU Priority" /t REG_DWORD /d 8 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Priority" /t REG_DWORD /d 6 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "SFIO Priority" /t REG_SZ /d "High" /f >nul 2>&1
+echo  [OK] Los juegos tendran maxima prioridad del sistema.
+
+:: SERVICES OPTIMIZATION
+echo.
+echo  [PASO 10/10] Desactivando servicios innecesarios...
+echo.
 for %%s in (DiagTrack dmwappushservice SysMain WerSvc PcaSvc DPS RetailDemo WSearch) do (
     sc stop %%s >nul 2>&1
-    sc config %%s start= disabled >nul 2>&1
+    sc config %%s start=disabled >nul 2>&1
 )
-echo [OK] Carga innecesaria del procesador eliminada.
+echo  [OK] Servicios de telemetria y mantenimiento desactivados.
 
-:: 11. CIERRE DE PROTOCOLO
+:: FINALIZACION
 echo.
-echo =========================================================================
-echo   PROTOCOLO EL NEXO v3.6 COMPLETADO SATISFACTORIAMENTE.
-echo   MÁXIMA POTENCIA DE KERNEL APLICADA.
-echo =========================================================================
+echo  ============================================================
+echo   OPTIMIZACION COMPLETADA CON EXITO
+echo  ============================================================
 echo.
-echo [IMPORTANTE] Debes REINICIAR el sistema para cargar el nuevo Kernel.
+echo   Tu PC ahora esta configurado para maximo rendimiento.
+echo   
+echo   IMPORTANTE: Ahora debes activar el plan de energia creado.
+echo   Se abrira el Panel de Control para que lo selecciones.
 echo.
-set /p r="¿Deseas reiniciar el sistema ahora? (S/N): "
-if /i "%r%"=="S" shutdown /r /t 5
+echo  ============================================================
+echo.
+pause
+
+:: Abrir panel de energia
+start powercfg.cpl
+
+echo.
+echo  [*] Reinicia tu PC para aplicar todos los cambios.
+echo.
+set /p "reboot= Deseas reiniciar ahora? (S/N): "
+if /i "%reboot%"=="S" shutdown /r /t 10 /c "Reiniciando para aplicar optimizaciones El Nexo..."
+
 exit

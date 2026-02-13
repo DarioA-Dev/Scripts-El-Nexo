@@ -1,113 +1,197 @@
 @echo off
-:: ==========================================================
-::   EL NEXO - INGENIERÍA DE RENDIMIENTO MÓVIL v3.6
-::   Protocolo: Desbloqueo de Turbo Boost y Gestión Energética
-:: ==========================================================
+:: =========================================================================
+::   EL NEXO - SISTEMA DE OPTIMIZACION AVANZADA v4.0 (PORTATIL)
+::   Protocolo: Turbo Boost, Gestion Termica y Movilidad
+:: =========================================================================
 chcp 65001 >nul
-title EL NEXO: RENDIMIENTO PORTÁTIL [FASE 1]
-color 0A
 setlocal enabledelayedexpansion
+title EL NEXO v4.0 - OPTIMIZADOR PORTATIL
+color 0B
 
-:: 1. VERIFICACIÓN DE AUTORIDAD
+:: VERIFICACION DE PRIVILEGIOS
 openfiles >nul 2>&1
 if %errorlevel% neq 0 (
+    cls
     color 0C
-    echo [ERROR] SE REQUIERE ACCESO AL KERNEL. EJECUTA COMO ADMINISTRADOR.
-    echo Haz clic derecho > Ejecutar como administrador.
-    pause >nul
-    exit
+    echo.
+    echo  ============================================================
+    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
+    echo  ============================================================
+    echo.
+    echo   Haz clic derecho sobre el archivo y selecciona:
+    echo   "Ejecutar como administrador"
+    echo.
+    echo  ============================================================
+    pause
+    exit /b
 )
 
-echo ======================================================
-echo          PROTOCOLO PORTÁTIL: EL NEXO v3.6
-echo        (FASE 1: MATRIZ DE ENERGÍA Y TÉRMICA)
-echo ======================================================
-
-:: 2. PUNTO DE CONTROL
+:: CABECERA CIBERPUNK "EL NEXO"
+cls
+color 0B
 echo.
-set /p "backup=¿Generar un Punto de Control de Ingeniería? (S/N): "
+echo  ============================================================
+echo      _____ _       _   _ _______   _______  
+echo     ^|  ___^| ^|     ^| \ ^| ^|  ___\ \ / /  _ \ 
+echo     ^| ^|__ ^| ^|     ^|  \^| ^| ^|__  \ V /^| ^| ^| ^|
+echo     ^|  __^|^| ^|     ^| . ` ^|  __^|  ^> ^< ^| ^| ^| ^|
+echo     ^| ^|___^| ^|____ ^| ^|\  ^| ^|___ / . \^| ^|_^| ^|
+echo     ^|_____^|______^|_^| \_^|_____/_/ \_\_____/ 
+echo.
+echo  ============================================================
+echo   PROTOCOLO: OPTIMIZACION MAXIMA [PORTATIL / LAPTOP]
+echo   VERSION: 4.0 ENHANCED - Estado: Iniciando secuencia...
+echo  ============================================================
+echo.
+
+:: PUNTO DE CONTROL
+echo  [PASO 1/9] Creando punto de restauracion de seguridad...
+echo.
+set /p "backup= Deseas crear un respaldo antes de continuar? (S/N): "
 if /i "%backup%"=="S" (
-    echo [+] Iniciando respaldo de configuración de sistema...
-    powershell -Command "Checkpoint-Computer -Description 'Rendimiento Portatil Nexo' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
-    echo [OK] Punto de control establecido.
+    echo.
+    echo  [*] Generando punto de restauracion del sistema...
+    powershell -Command "Checkpoint-Computer -Description 'El Nexo v4.0 Laptop' -RestorePointType 'MODIFY_SETTINGS'" 2>nul
+    if !errorlevel! equ 0 (
+        echo  [OK] Punto de restauracion creado correctamente.
+    ) else (
+        echo  [!] No se pudo crear el punto. Continuando de todos modos...
+    )
+) else (
+    echo  [!] Saltando respaldo por decision del usuario.
 )
 
-:: 3. CREACIÓN DE PLAN "NEXO ELITE" (PROCESO DE ALTA PRIORIDAD)
+:: PLAN DE ENERGIA ELITE
 echo.
-echo [+] Construyendo esquema de energía personalizado...
+echo  [PASO 2/9] Creando plan de energia de alto rendimiento...
+echo.
 set "nexo_lp_guid=22222222-2222-2222-2222-222222222222"
 powercfg -delete %nexo_lp_guid% >nul 2>&1
-:: Duplicar el esquema de Máximo Rendimiento
-powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 %nexo_lp_guid% >nul 2>&1
-powercfg -changename %nexo_lp_guid% "Optimización Portátil El Nexo"
+powercfg -duplicatescheme 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c %nexo_lp_guid% >nul 2>&1
+powercfg -changename %nexo_lp_guid% "Alto Rendimiento El Nexo" "Plan optimizado para portatiles gaming conectados a corriente" >nul 2>&1
 powercfg -setactive %nexo_lp_guid%
 
-:: 4. DESBLOQUEO DE PARÁMETROS OCULTOS DEL PROCESADOR (TURBO BOOST)
+:: Configuracion avanzada
+echo  [*] Configurando parametros de energia avanzados...
+powercfg -change -monitor-timeout-ac 0 >nul 2>&1
+powercfg -change -disk-timeout-ac 0 >nul 2>&1
+powercfg -change -standby-timeout-ac 0 >nul 2>&1
+
+:: CPU Performance
+powercfg -setacvalueindex %nexo_lp_guid% sub_processor PROCTHROTTLEMIN 95 >nul 2>&1
+powercfg -setacvalueindex %nexo_lp_guid% sub_processor PROCTHROTTLEMAX 100 >nul 2>&1
+powercfg -setacvalueindex %nexo_lp_guid% sub_processor PERFBOOSTMODE 2 >nul 2>&1
+
+:: Turbo Boost desbloqueado
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7" /v "Attributes" /t REG_DWORD /d 2 /f >nul 2>&1
+powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 be337238-0d82-4146-a960-4f3749d470c7 2 >nul 2>&1
+
+:: Refrigeracion activa
+powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 94D3A615-A899-4AC5-AD2C-96D587C4A8D9 1 >nul 2>&1
+
+:: PCI Express sin ahorro
+powercfg -setacvalueindex %nexo_lp_guid% sub_pciexpress aspm 0 >nul 2>&1
+
+echo  [OK] Plan de maxima potencia activado.
+
+:: MSI MODE
 echo.
-echo ======================================================
-echo [+] Desbloqueando "Processor Performance Boost Mode".
-echo [AVISO] Inyectando acceso a frecuencias Turbo en el registro...
-echo ======================================================
-:: Hacer visible el modo de boost para forzarlo
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7" /v "Attributes" /t REG_DWORD /d 2 /f >nul
-:: Configurar Boost Mode en "Agresivo" (Máximo rendimiento)
-powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 be337238-0d82-4146-a960-4f3749d470c7 2
-
-:: SEGURIDAD TÉRMICA NEXO: Configuración de refrigeración y estados mínimos
-echo [+] Aplicando directivas de refrigeración activa y seguridad...
-:: Directiva de refrigeración de sistema: Activo (1)
-powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 94D3A615-A899-4AC5-AD2C-96D587C4A8D9 1
-:: Estado mínimo del procesador: 5% (Permite enfriamiento en reposo)
-powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 8934347c-01ed-4d00-8805-0c7ed2b904d9 5
-:: Estado máximo del procesador: 100%
-powercfg -setacvalueindex %nexo_lp_guid% 54533251-82be-4824-96c1-47b60b740d00 bc5038f0-0a87-4fb1-a738-5c41205631cc 100
-
-echo [OK] Frecuencias de CPU liberadas de restricciones de ahorro.
-
-timeout /t 2 >nul
-:: ==========================================================
-::   EL NEXO - INGENIERÍA DE RENDIMIENTO MÓVIL v3.6
-::   Protocolo: Latencia de Hardware y Prioridad de Bus
-:: ==========================================================
-title EL NEXO: RENDIMIENTO PORTÁTIL [FASE 2]
-color 0A
-
-:: 5. MODO MSI DINÁMICO (HARDWARE OPTIMIZATION)
+echo  [PASO 3/9] Activando MSI Mode en dispositivos...
 echo.
-echo [+] Sincronizando Modo MSI en controladores de sistema...
-echo ======================================================
-echo [AVISO] El sistema está reasignando las interrupciones
-echo de la GPU y Red para reducir el Input Lag. 
-echo Esto puede tardar unos segundos...
-echo ======================================================
-powershell -Command "$pci = 'HKLM:\SYSTEM\CurrentControlSet\Enum\PCI'; Get-ChildItem $pci -Recurse | Where-Object { $_.Name -like '*Interrupt Management*' } | ForEach-Object { $msi = \"$($_.Name)\MessageSignaledInterruptProperties\"; if (Test-Path \"Registry::$msi\") { Set-ItemProperty -Path \"Registry::$msi\" -Name 'MSISupported' -Value 1 -Type DWord } }" >nul 2>&1
-echo [OK] Prioridad de hardware establecida mediante Message Signaled Interrupts.
+set "msi_temp=%temp%\nexo_msi_lp_%random%.txt"
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" >"%msi_temp%" 2>nul
+if exist "%msi_temp%" (
+    echo  [*] Optimizando interrupciones de hardware...
+    for /f "tokens=*" %%i in ('type "%msi_temp%" ^| findstr /I "HKEY_LOCAL_MACHINE"') do (
+        reg add "%%i\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d 1 /f >nul 2>&1
+    )
+    del /f /q "%msi_temp%" >nul 2>&1
+    echo  [OK] Latencia de hardware reducida.
+)
 
-:: 6. OPTIMIZACIÓN DE LATENCIA DE RED (HÍBRIDA WI-FI)
+:: NETWORK OPTIMIZATION
 echo.
-echo [+] Configurando adaptadores para baja latencia de señal...
-:: Desactivar el ahorro de energía de los adaptadores de red (Evita micro-cortes)
-powershell -Command "Get-NetAdapter | ForEach-Object { Disable-NetAdapterPowerManagement -Name $_.Name -ErrorAction SilentlyContinue }" >nul 2>&1
-echo [OK] Sincronización de red móvil optimizada.
+echo  [PASO 4/9] Optimizando adaptadores de red...
+echo.
+for /l %%n in (0,1,9) do (
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\000%%n" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
+)
+echo  [OK] Wi-Fi configurado para maxima velocidad.
 
-:: 7. AJUSTES DE REGISTRO PARA SISTEMAS MÓVILES
+:: GPU OPTIMIZATION
 echo.
-echo [+] Inyectando parámetros de respuesta instantánea...
-:: Desactivar Power Throttling (Evita que Windows limite apps cuando no están en foco)
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "PowerThrottlingOff" /t REG_DWORD /d 1 /f >nul
-:: Prioridad de Win32 (Quantum) para procesos en primer plano
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 38 /f >nul
-echo [OK] Prioridades de kernel ajustadas para movilidad.
+echo  [PASO 5/9] Configurando sistema grafico...
+echo.
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d 2 /f >nul 2>&1
 
-:: 8. CIERRE DE PROTOCOLO
+set "gpu_temp=%temp%\nexo_gpu_lp_%random%.txt"
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\Video" /s /f "EnableUlps" >"%gpu_temp%" 2>nul
+if exist "%gpu_temp%" (
+    for /f "tokens=*" %%a in ('type "%gpu_temp%" ^| findstr /I "HKEY_LOCAL_MACHINE"') do (
+        reg add "%%a" /v "EnableUlps" /t REG_DWORD /d 0 /f >nul 2>&1
+    )
+    del /f /q "%gpu_temp%" >nul 2>&1
+)
+echo  [OK] GPU preparada para gaming intenso.
+
+:: CPU & RAM
 echo.
-echo ======================================================
-echo    INGENIERÍA PORTÁTIL COMPLETADA CON ÉXITO.
-echo    HARDWARE CONFIGURADO PARA MÁXIMO RENDIMIENTO.
-echo ======================================================
-echo Se recomienda mantener el portátil CONECTADO A LA CORRIENTE
-echo para obtener el 100% de la potencia inyectada.
+echo  [PASO 6/9] Ajustando prioridades del sistema...
 echo.
-set /p r="¿Deseas reiniciar ahora? (S/N): "
-if /i "%r%"=="S" shutdown /r /t 5
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 38 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 4294967295 /f >nul 2>&1
+echo  [OK] Sistema optimizado para respuesta rapida.
+
+:: POWER THROTTLING
+echo.
+echo  [PASO 7/9] Desactivando limitadores de energia...
+echo.
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "PowerThrottlingOff" /t REG_DWORD /d 1 /f >nul 2>&1
+echo  [OK] Throttling de CPU y GPU eliminado.
+
+:: INPUT LAG
+echo.
+echo  [PASO 8/9] Reduciendo latencia de entrada...
+echo.
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d 20 /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d 20 /f >nul 2>&1
+echo  [OK] Perifericos optimizados.
+
+:: GAME PRIORITY
+echo.
+echo  [PASO 9/9] Configurando prioridad de juegos...
+echo.
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "GPU Priority" /t REG_DWORD /d 8 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Priority" /t REG_DWORD /d 6 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
+echo  [OK] Juegos con maxima prioridad.
+
+:: FINALIZACION
+echo.
+echo  ============================================================
+echo   OPTIMIZACION COMPLETADA CON EXITO
+echo  ============================================================
+echo.
+echo   Tu portatil ahora esta listo para maxima potencia.
+echo   
+echo   IMPORTANTE:
+echo   - Conecta el cargador para aprovechar todo el rendimiento
+echo   - Selecciona el plan "Alto Rendimiento El Nexo"
+echo   
+echo   Se abrira el Panel de Control para activar el plan.
+echo.
+echo  ============================================================
+echo.
+pause
+
+:: Abrir panel de energia
+start powercfg.cpl
+
+echo.
+echo  [*] Reinicia tu PC para aplicar todos los cambios.
+echo.
+set /p "reboot= Deseas reiniciar ahora? (S/N): "
+if /i "%reboot%"=="S" shutdown /r /t 10 /c "Reiniciando para aplicar optimizaciones El Nexo..."
+
 exit

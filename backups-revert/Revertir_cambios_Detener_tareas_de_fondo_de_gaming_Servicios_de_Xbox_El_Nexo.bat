@@ -1,92 +1,102 @@
-<# : batch script hack
 @echo off
-:: ==========================================================================
-::   EL NEXO - SUITE DE OPTIMIZACION v4.0
-::   (C) 2026 DarioA-Dev | Engineering Dept.
-:: ==========================================================================
-::   ARQUITECTURA: Hybrid PowerShell Wrapper (Stable)
-:: ==========================================================================
-
-:: 1. INICIO ROBUSTO
+:: =========================================================================
+::   EL NEXO - REVERSION DE OPTIMIZACIONES v4.0
+::   Modulo: Restaurar Servicios de Fondo [PROCESOS]
+:: =========================================================================
 chcp 65001 >nul
-setlocal
-cd /d "%~dp0"
-title [EL NEXO] Kernel Optimizer
+setlocal enabledelayedexpansion
+title EL NEXO v4.0 - REVERTIR OPTIMIZACION DE PROCESOS
 color 0B
 
-:: 2. INTERFAZ (ASCII CON ESCAPE CORRECTO)
-cls
-echo.
-echo   ______ _       _   _ ______   _____
-echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \
-echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
-echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
-echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
-echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/
-echo.
-echo  ==========================================================================
-echo   MODULO: RESTAURAR TAREAS DE FONDO
-echo   INFO: Optimizando... Por favor espere.
-echo  ==========================================================================
-echo.
-
-:: 3. ELEVACION DE PRIVILEGIOS (ADMIN)
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo   [!] SOLICITANDO PERMISOS DE ADMINISTRADOR...
-    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
+:: VERIFICACION DE PRIVILEGIOS
+openfiles >nul 2>&1
+if %errorlevel% neq 0 (
+    cls
+    color 0C
+    echo.
+    echo  ============================================================
+    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
+    echo  ============================================================
+    echo.
+    echo   Haz clic derecho sobre el archivo y selecciona:
+    echo   "Ejecutar como administrador"
+    echo.
+    echo  ============================================================
+    pause
     exit /b
 )
 
-:: 4. LANZAMIENTO DEL MOTOR POWERSHELL
-:: Lee este mismo archivo, ignora las lineas Batch y ejecuta el resto
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression -Command ((Get-Content -LiteralPath '%~f0') -join \"`n\")"
-exit /b
-:>
+:: CABECERA CIBERPUNK "EL NEXO"
+cls
+color 0B
+echo.
+echo  ============================================================
+echo      _____ _       _   _ _______   _______  
+echo     ^|  ___^| ^|     ^| \ ^| ^|  ___\ \ / /  _ \ 
+echo     ^| ^|__ ^| ^|     ^|  \^| ^| ^|__  \ V /^| ^| ^| ^|
+echo     ^|  __^|^| ^|     ^| . ` ^|  __^|  ^> ^< ^| ^| ^| ^|
+echo     ^| ^|___^| ^|____ ^| ^|\  ^| ^|___ / . \^| ^|_^| ^|
+echo     ^|_____^|______^|_^| \_^|_____/_/ \_\_____/ 
+echo.
+echo  ============================================================
+echo   PROTOCOLO: RESTAURACION DE PROCESOS [FONDO]
+echo   VERSION: 4.0 - Estado: Reactivando servicios...
+echo  ============================================================
+echo.
 
-# ===========================================================================
-#  ZONA POWERSHELL (AQUI EMPIEZA LA LOGICA REAL)
-# ===========================================================================
-$Host.UI.RawUI.WindowTitle = "[EL NEXO] Motor Hibrido Activo"
-Write-Host "   [CORE] Cargando modulos del sistema..." -ForegroundColor Cyan
+:: RESTORE BACKGROUND APPS
+echo  [PASO 1/5] Habilitando aplicaciones de fondo...
+echo.
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v "LetAppsRunInBackground" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d 0 /f >nul 2>&1
+echo  [OK] Apps de fondo permitidas.
 
-# 1. Background Apps
-Write-Host "`n   [-] Habilitando permisos de aplicaciones en segundo plano..." -ForegroundColor Yellow
-$appPrivacy = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy"
-if (Test-Path $appPrivacy) {
-    Set-ItemProperty -Path $appPrivacy -Name "LetAppsRunInBackground" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-}
-$bgApps = "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications"
-if (Test-Path $bgApps) {
-    Set-ItemProperty -Path $bgApps -Name "GlobalUserDisabled" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] Apps de fondo permitidas." -ForegroundColor Green
+:: RESTORE GAMEDVR
+echo  [PASO 2/5] Reactivando GameDVR y Barra de Juegos...
+echo.
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 1 /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v "AllowgameDVR" /f >nul 2>&1
+echo  [OK] GameDVR activo.
 
-# 2. Xbox Services
-Write-Host "`n   [-] Reconfigurando servicios de Xbox a modo Automático/Manual..." -ForegroundColor Yellow
-$xboxServices = @("XblAuthManager", "XblGameSave", "XboxGipSvc", "XboxNetApiSvc", "GamingServices")
-foreach ($s in $xboxServices) {
-    Set-Service -Name $s -StartupType Manual -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] Servicios de Xbox restaurados." -ForegroundColor Green
+:: RESTORE XBOX SERVICES
+echo.
+echo  [PASO 3/5] Reactivando servicios de Xbox...
+echo.
+for %%s in (XblAuthManager XblGameSave XboxGipSvc XboxNetApiSvc GamingServices GamingServicesNet) do (
+    sc config %%s start=demand >nul 2>&1
+)
+echo  [OK] Servicios de Xbox disponibles.
 
-# 3. GameDVR
-Write-Host "`n   [-] Habilitando GameDVR y Barra de Juegos..." -ForegroundColor Yellow
-$gameConfig = "HKCU:\System\GameConfigStore"
-if (Test-Path $gameConfig) {
-    Set-ItemProperty -Path $gameConfig -Name "GameDVR_Enabled" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-}
-$dvrPolicy = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR"
-if (Test-Path $dvrPolicy) {
-    Set-ItemProperty -Path $dvrPolicy -Name "AllowgameDVR" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] GameDVR habilitado." -ForegroundColor Green
+:: RESTORE TELEMETRY
+echo.
+echo  [PASO 4/5] Reactivando servicios de diagnostico...
+echo.
+for %%s in (DiagTrack dmwappushservice WerSvc PcaSvc DPS) do (
+    sc config %%s start=auto >nul 2>&1
+    sc start %%s >nul 2>&1
+)
+echo  [OK] Diagnostico del sistema activo.
 
-Write-Host "`n   ======================================================" -ForegroundColor Cyan
-Write-Host "      RESTAURACION COMPLETADA" -ForegroundColor Cyan
-Write-Host "   ======================================================" -ForegroundColor Cyan
-Write-Host "   Servicios y procesos restaurados." -ForegroundColor Yellow
+:: RESTORE SCHEDULED TASKS
+echo.
+echo  [PASO 5/5] Reactivando tareas programadas...
+echo.
+schtasks /Change /TN "\Microsoft\Windows\Defrag\ScheduledDefrag" /Enable >nul 2>&1
+schtasks /Change /TN "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" /Enable >nul 2>&1
+schtasks /Change /TN "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" /Enable >nul 2>&1
+echo  [OK] Tareas de mantenimiento activas.
 
-Write-Host "   [EXITO] Operacion finalizada." -ForegroundColor Green
-Write-Host "   Presiona cualquier tecla para salir..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+:: FINALIZACION
+echo.
+echo  ============================================================
+echo   REVERSION COMPLETADA CON EXITO
+echo  ============================================================
+echo.
+echo   Servicios y procesos de fondo restaurados.
+echo.
+echo  ============================================================
+echo.
+set /p "reboot= Deseas reiniciar el sistema ahora? (S/N): "
+if /i "%reboot%"=="S" shutdown /r /t 10 /c "Reiniciando para completar la reversion..."
+
+exit

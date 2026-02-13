@@ -1,132 +1,176 @@
 @echo off
-:: ==========================================================
-::   EL NEXO - INGENIERÍA DE RED Y BAJA LATENCIA v3.6
-::   Protocolo: TCP/IP Stack, DNS y Nagle's Algorithm
-:: ==========================================================
+:: =========================================================================
+::   EL NEXO - OPTIMIZADOR DE RED Y BAJA LATENCIA v4.0
+::   Protocolo: TCP/IP Stack, DNS y Eliminacion de Lag
+:: =========================================================================
 chcp 65001 >nul
 setlocal enabledelayedexpansion
-title EL NEXO: NETWORK OPTIMIZER v3.6
+title EL NEXO v4.0 - OPTIMIZADOR DE RED
 color 0B
 
-:: 1. VERIFICACIÓN DE AUTORIDAD (ADMIN)
-net session >nul 2>&1
+:: VERIFICACION DE PRIVILEGIOS
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
+    cls
     color 0C
     echo.
-    echo   [ERROR] NIVEL DE AUTORIDAD INSUFICIENTE.
-    echo   Para optimizar la pila TCP/IP necesitas ser ADMINISTRADOR.
-    pause >nul
-    exit
-)
-
-:: 2. CABECERA ASCII "EL NEXO"
-cls
-echo.
-echo   ______ _       _   _ ______   _____ 
-echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \ 
-echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
-echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
-echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
-echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/ 
-echo.
-echo  ==========================================================
-echo   PROTOCOLO: BAJA LATENCIA DE RED (V3.6)
-echo   ESTADO: Sincronizando interfaz de red...
-echo  ==========================================================
-echo.
-
-:: 3. PUNTO DE CONTROL
-echo [SEGURIDAD] ¿Deseas generar un Punto de Control de Red?
-set /p "rp=Presiona S para crear, o N para saltar: "
-if /i "%rp%"=="S" (
+    echo  ============================================================
+    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
+    echo  ============================================================
     echo.
-    echo [+] Creando punto de seguridad...
-    powershell -Command "Checkpoint-Computer -Description 'Red El Nexo v3.6' -RestorePointType 'MODIFY_SETTINGS'" >nul 2>&1
-    echo [OK] Punto establecido.
+    echo   Haz clic derecho sobre el archivo y selecciona:
+    echo   "Ejecutar como administrador"
+    echo.
+    echo  ============================================================
+    pause
+    exit /b
 )
 
-:: 4. OPTIMIZACIÓN DE LA PILA TCP/IP (EXTREMO)
+:: CABECERA CIBERPUNK "EL NEXO"
+cls
+color 0B
 echo.
-echo [+] Reconfigurando parámetros globales de la pila TCP...
+echo  ============================================================
+echo      _____ _       _   _ _______   _______  
+echo     ^|  ___^| ^|     ^| \ ^| ^|  ___\ \ / /  _ \ 
+echo     ^| ^|__ ^| ^|     ^|  \^| ^| ^|__  \ V /^| ^| ^| ^|
+echo     ^|  __^|^| ^|     ^| . ` ^|  __^|  ^> ^< ^| ^| ^| ^|
+echo     ^| ^|___^| ^|____ ^| ^|\  ^| ^|___ / . \^| ^|_^| ^|
+echo     ^|_____^|______^|_^| \_^|_____/_/ \_\_____/ 
+echo.
+echo  ============================================================
+echo   PROTOCOLO: OPTIMIZACION DE RED [BAJA LATENCIA]
+echo   VERSION: 4.0 ENHANCED - Estado: Iniciando secuencia...
+echo  ============================================================
+echo.
+
+:: PUNTO DE CONTROL
+echo  [PASO 1/9] Creando punto de restauracion de seguridad...
+echo.
+set /p "backup= Deseas crear un respaldo antes de continuar? (S/N): "
+if /i "%backup%"=="S" (
+    echo.
+    echo  [*] Generando punto de restauracion del sistema...
+    powershell -Command "Checkpoint-Computer -Description 'El Nexo v4.0 Red' -RestorePointType 'MODIFY_SETTINGS'" 2>nul
+    if !errorlevel! equ 0 (
+        echo  [OK] Punto de restauracion creado correctamente.
+    ) else (
+        echo  [!] No se pudo crear el punto. Continuando de todos modos...
+    )
+) else (
+    echo  [!] Saltando respaldo por decision del usuario.
+)
+
+:: TCP/IP STACK OPTIMIZATION
+echo.
+echo  [PASO 2/9] Optimizando pila TCP/IP...
+echo.
 netsh int tcp set global autotuninglevel=normal >nul 2>&1
 netsh int tcp set global heuristics=disabled >nul 2>&1
 netsh int tcp set global rss=enabled >nul 2>&1
 netsh int tcp set global fastopen=enabled >nul 2>&1
 netsh int tcp set global timestamps=disabled >nul 2>&1
 netsh int tcp set global ecncapability=disabled >nul 2>&1
-:: Proveedor de congestión Cubic (Balanceado/Moderno)
+netsh int tcp set global chimney=enabled >nul 2>&1
 netsh int tcp set supplemental template=internet congestionprovider=cubic >nul 2>&1
-echo [OK] TCP/IP optimizado para transferencia de alta velocidad.
+echo  [OK] Protocolo TCP configurado para gaming.
 
-:: 5. ELIMINACIÓN DE ESTRANGULAMIENTO (THROTTLING)
+:: NETWORK THROTTLING
 echo.
-echo [+] Ajustando índices de respuesta de red del sistema...
+echo  [PASO 3/9] Eliminando limitadores de red...
+echo.
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 4294967295 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 0 /f >nul 2>&1
-echo [OK] Throttling de red desactivado.
+echo  [OK] Throttling de red desactivado.
 
-:: 6. MODO MSI DINÁMICO (RED)
+:: MSI MODE FOR NETWORK
 echo.
-echo [+] Inyectando Modo MSI en adaptadores de red...
-reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" > "%temp%\nexo_msi_net.txt" 2>nul
-if exist "%temp%\nexo_msi_net.txt" (
-    for /f "tokens=*" %%i in ('type "%temp%\nexo_msi_net.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
+echo  [PASO 4/9] Activando MSI Mode en adaptadores de red...
+echo.
+set "msi_temp=%temp%\nexo_msi_net_%random%.txt"
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" >"%msi_temp%" 2>nul
+if exist "%msi_temp%" (
+    echo  [*] Optimizando interrupciones de hardware de red...
+    for /f "tokens=*" %%i in ('type "%msi_temp%" ^| findstr /I "HKEY_LOCAL_MACHINE"') do (
         reg add "%%i\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d 1 /f >nul 2>&1
     )
-    del /f /q "%temp%\nexo_msi_net.txt" >nul 2>&1
+    del /f /q "%msi_temp%" >nul 2>&1
+    echo  [OK] Latencia de adaptadores reducida.
 )
-echo [OK] Latencia de hardware reducida en el bus PCI.
 
-:: 7. NAGLE'S ALGORITHM (TCP ACK FREQUENCY)
+:: NAGLE'S ALGORITHM DISABLE
 echo.
-echo [+] Aplicando TcpAckFrequency (Instante ACK)...
-for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" 2^>nul') do (
+echo  [PASO 5/9] Desactivando algoritmo de Nagle...
+echo.
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" 2^>nul ^| findstr /I "HKEY"') do (
     reg add "%%a" /v "TcpAckFrequency" /t REG_DWORD /d 1 /f >nul 2>&1
     reg add "%%a" /v "TCPNoDelay" /t REG_DWORD /d 1 /f >nul 2>&1
+    reg add "%%a" /v "TcpDelAckTicks" /t REG_DWORD /d 0 /f >nul 2>&1
 )
-echo [OK] Confirmación instantánea de paquetes activada (Menor Ping).
+echo  [OK] Paquetes se enviaran instantaneamente.
 
-:: 8. PROTOCOLO HÍBRIDO (WI-FI / PORTÁTIL)
+:: QOS PACKET SCHEDULER
 echo.
-set /p "laptop=¿Tu sistema es un PORTÁTIL o usa WI-FI? (S/N): "
+echo  [PASO 6/9] Configurando Quality of Service...
+echo.
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Psched" /v "NonBestEffortLimit" /t REG_DWORD /d 0 /f >nul 2>&1
+echo  [OK] QoS optimizado para juegos.
+
+:: WIFI/LAPTOP OPTIMIZATION
+echo.
+echo  [PASO 7/9] Optimizacion de adaptadores inalambricos...
+echo.
+set /p "laptop= Tu sistema usa Wi-Fi o es un portatil? (S/N): "
 if /i "%laptop%"=="S" (
     echo.
-    echo [+] Desactivando gestión de energía en adaptadores inalámbricos...
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\0000" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\0001" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\0002" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
-    echo [OK] Ahorro de energía en red neutralizado.
+    echo  [*] Desactivando ahorro de energia en Wi-Fi...
+    for /l %%n in (0,1,9) do (
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\000%%n" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
+    )
+    echo  [OK] Wi-Fi configurado para maxima velocidad.
 )
 
-:: 9. DNS TURBO (CLOUDFLARE)
+:: DNS CONFIGURATION
 echo.
-echo [!] ¿Deseas inyectar DNS de alta velocidad (1.1.1.1)?
-set /p "dns=Tu respuesta (S/N): "
+echo  [PASO 8/9] Configuracion de servidores DNS...
+echo.
+set /p "dns= Deseas configurar DNS de Cloudflare (1.1.1.1)? (S/N): "
 if /i "%dns%"=="S" (
     echo.
-    echo [+] Configurando DNS El Nexo...
+    echo  [*] Aplicando DNS de baja latencia...
     netsh interface ip set dns "Ethernet" static 1.1.1.1 primary >nul 2>&1
     netsh interface ip add dns "Ethernet" 1.0.0.1 index=2 >nul 2>&1
     netsh interface ip set dns "Wi-Fi" static 1.1.1.1 primary >nul 2>&1
     netsh interface ip add dns "Wi-Fi" 1.0.0.1 index=2 >nul 2>&1
-    echo [OK] Servidores DNS establecidos satisfactoriamente.
+    echo  [OK] DNS configurados correctamente.
+) else (
+    echo  [!] Saltando configuracion DNS.
 )
 
-:: 10. PURGA FINAL
+:: NETWORK RESET
 echo.
-echo [AVISO] Se va a reiniciar la red para aplicar los cambios.
-echo         Tendrás una micro-desconexión temporal de 2-3 segundos.
-echo [+] Ejecutando RESET de pila IP y Flush DNS...
+echo  [PASO 9/9] Aplicando cambios de red...
+echo.
+echo  [*] Se reiniciaran los adaptadores de red brevemente...
 ipconfig /flushdns >nul 2>&1
-netsh winsock reset >nul 2>&1
+netsh winsock reset catalog >nul 2>&1
 netsh int ip reset >nul 2>&1
-echo [OK] Conexión de red restablecida y optimizada.
+echo  [OK] Cambios aplicados correctamente.
 
+:: FINALIZACION
 echo.
-echo ==========================================================
-echo    PROTOCOLO COMPLETADO. RED SINCRONIZADA AL 100%%.
-echo ==========================================================
-echo Se recomienda reiniciar el PC para consolidar cambios.
+echo  ============================================================
+echo   OPTIMIZACION COMPLETADA CON EXITO
+echo  ============================================================
+echo.
+echo   Tu conexion ahora tiene:
+echo   - Menor ping y latencia
+echo   - Mejor estabilidad en juegos online
+echo   - Paquetes sin retardo artificial
+echo.
+echo   RECOMENDACION: Reinicia tu PC para mejores resultados.
+echo.
+echo  ============================================================
 echo.
 pause
 exit

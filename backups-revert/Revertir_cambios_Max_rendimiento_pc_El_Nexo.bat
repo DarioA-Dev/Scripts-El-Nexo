@@ -1,117 +1,127 @@
-<# : batch script hack
 @echo off
-:: ==========================================================================
-::   EL NEXO - SUITE DE OPTIMIZACION v4.0
-::   (C) 2026 DarioA-Dev | Engineering Dept.
-:: ==========================================================================
-::   ARQUITECTURA: Hybrid PowerShell Wrapper (Stable)
-:: ==========================================================================
-
-:: 1. INICIO ROBUSTO
+:: =========================================================================
+::   EL NEXO - REVERSION DE OPTIMIZACIONES v4.0
+::   Modulo: Restaurar Configuracion Original [PC ESCRITORIO]
+:: =========================================================================
 chcp 65001 >nul
-setlocal
-cd /d "%~dp0"
-title [EL NEXO] Kernel Optimizer
+setlocal enabledelayedexpansion
+title EL NEXO v4.0 - REVERTIR OPTIMIZACIONES PC
 color 0B
 
-:: 2. INTERFAZ (ASCII CON ESCAPE CORRECTO)
-cls
-echo.
-echo   ______ _       _   _ ______   _____
-echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \
-echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
-echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
-echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
-echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/
-echo.
-echo  ==========================================================================
-echo   MODULO: RESTAURAR EL NEXO (PC)
-echo   INFO: Optimizando... Por favor espere.
-echo  ==========================================================================
-echo.
-
-:: 3. ELEVACION DE PRIVILEGIOS (ADMIN)
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo   [!] SOLICITANDO PERMISOS DE ADMINISTRADOR...
-    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
+:: VERIFICACION DE PRIVILEGIOS
+openfiles >nul 2>&1
+if %errorlevel% neq 0 (
+    cls
+    color 0C
+    echo.
+    echo  ============================================================
+    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
+    echo  ============================================================
+    echo.
+    echo   Haz clic derecho sobre el archivo y selecciona:
+    echo   "Ejecutar como administrador"
+    echo.
+    echo  ============================================================
+    pause
     exit /b
 )
 
-:: 4. LANZAMIENTO DEL MOTOR POWERSHELL
-:: Lee este mismo archivo, ignora las lineas Batch y ejecuta el resto
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression -Command ((Get-Content -LiteralPath '%~f0') -join \"`n\")"
-exit /b
-:>
+:: CABECERA CIBERPUNK "EL NEXO"
+cls
+color 0B
+echo.
+echo  ============================================================
+echo      _____ _       _   _ _______   _______  
+echo     ^|  ___^| ^|     ^| \ ^| ^|  ___\ \ / /  _ \ 
+echo     ^| ^|__ ^| ^|     ^|  \^| ^| ^|__  \ V /^| ^| ^| ^|
+echo     ^|  __^|^| ^|     ^| . ` ^|  __^|  ^> ^< ^| ^| ^| ^|
+echo     ^| ^|___^| ^|____ ^| ^|\  ^| ^|___ / . \^| ^|_^| ^|
+echo     ^|_____^|______^|_^| \_^|_____/_/ \_\_____/ 
+echo.
+echo  ============================================================
+echo   PROTOCOLO: REVERSION DE OPTIMIZACIONES [PC ESCRITORIO]
+echo   VERSION: 4.0 - Estado: Restaurando configuracion...
+echo  ============================================================
+echo.
 
-# ===========================================================================
-#  ZONA POWERSHELL (AQUI EMPIEZA LA LOGICA REAL)
-# ===========================================================================
-$Host.UI.RawUI.WindowTitle = "[EL NEXO] Motor Hibrido Activo"
-Write-Host "   [CORE] Cargando modulos del sistema..." -ForegroundColor Cyan
+:: RESTORE POWER SCHEME
+echo  [PASO 1/7] Restaurando planes de energia de fabrica...
+echo.
+powercfg -restoredefaultschemes >nul 2>&1
+powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e >nul 2>&1
+powercfg -h on >nul 2>&1
+echo  [OK] Plan Equilibrado activado.
 
-# 1. Restore Power
-Write-Host "`n   [-] Restaurando planes de energía por defecto..." -ForegroundColor Yellow
-powercfg -restoredefaultschemes | Out-Null
-$balanced = "381b4222-f694-41f0-9685-ff5bb260df2e"
-powercfg -setactive $balanced | Out-Null
-Write-Host "   [OK] Plan Equilibrado activo." -ForegroundColor Green
+:: RESTORE KERNEL
+echo.
+echo  [PASO 2/7] Eliminando modificaciones del kernel...
+echo.
+bcdedit /deletevalue disabledynamictick >nul 2>&1
+bcdedit /deletevalue useplatformclock >nul 2>&1
+bcdedit /deletevalue tscsyncpolicy >nul 2>&1
+bcdedit /deletevalue bootux >nul 2>&1
+bcdedit /deletevalue hypervisorlaunchtype >nul 2>&1
+bcdedit /deletevalue x2apicpolicy >nul 2>&1
+echo  [OK] Parametros de arranque restaurados.
 
-# 2. Restore Kernel (BCD)
-Write-Host "`n   [-] Eliminando modificaciones del Kernel (BCD)..." -ForegroundColor Yellow
-Start-Process bcdedit -ArgumentList "/deletevalue disabledynamictick" -NoNewWindow -Wait -ErrorAction SilentlyContinue
-Start-Process bcdedit -ArgumentList "/deletevalue useplatformclock" -NoNewWindow -Wait -ErrorAction SilentlyContinue
-Start-Process bcdedit -ArgumentList "/deletevalue tscsyncpolicy" -NoNewWindow -Wait -ErrorAction SilentlyContinue
-Start-Process bcdedit -ArgumentList "/deletevalue bootux" -NoNewWindow -Wait -ErrorAction SilentlyContinue
-Start-Process bcdedit -ArgumentList "/deletevalue hypervisorlaunchtype" -NoNewWindow -Wait -ErrorAction SilentlyContinue
-Write-Host "   [OK] Parametros de arranque limpios." -ForegroundColor Green
+:: RESTORE CPU & RAM
+echo.
+echo  [PASO 3/7] Restaurando prioridades de CPU y memoria...
+echo.
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 2 /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 20 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 10 /f >nul 2>&1
+echo  [OK] Configuracion de memoria normalizada.
 
-# 3. Restore Registry
-Write-Host "`n   [-] Restaurando gestión de memoria y prioridades..." -ForegroundColor Yellow
-$prioControl = "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
-if (Test-Path $prioControl) {
-    Set-ItemProperty -Path $prioControl -Name "Win32PrioritySeparation" -Value 2 -Type DWord -ErrorAction SilentlyContinue
-}
+:: RESTORE GPU
+echo.
+echo  [PASO 4/7] Restaurando configuracion grafica...
+echo.
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /f >nul 2>&1
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Scheduler" /v "EnablePreemption" /f >nul 2>&1
+echo  [OK] GPU configurada por defecto.
 
-$memMan = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
-if (Test-Path $memMan) {
-    Set-ItemProperty -Path $memMan -Name "DisablePagingExecutive" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path $memMan -Name "LargeSystemCache" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-}
+:: RESTORE INPUT
+echo.
+echo  [PASO 5/7] Restaurando configuracion de entrada...
+echo.
+reg delete "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /f >nul 2>&1
+reg delete "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /f >nul 2>&1
+reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "400" /f >nul 2>&1
+echo  [OK] Perifericos restaurados.
 
-$sysProfile = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
-if (Test-Path $sysProfile) {
-    Set-ItemProperty -Path $sysProfile -Name "NetworkThrottlingIndex" -Value 10 -Type DWord -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path $sysProfile -Name "SystemResponsiveness" -Value 20 -Type DWord -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] Claves de registro normalizadas." -ForegroundColor Green
+:: RESTORE FILESYSTEM
+echo.
+echo  [PASO 6/7] Restaurando sistema de archivos...
+echo.
+fsutil behavior set disablelastaccess 2 >nul 2>&1
+fsutil behavior set disable8dot3 2 >nul 2>&1
+fsutil behavior set memoryusage 1 >nul 2>&1
+echo  [OK] NTFS configurado por defecto.
 
-# 4. Restore Services
-Write-Host "`n   [-] Reactivando servicios de Windows..." -ForegroundColor Yellow
-$services = @("DiagTrack", "dmwappushservice", "SysMain", "WerSvc", "MapsBroker", "PcaSvc", "DPS", "RetailDemo", "WSearch")
-foreach ($s in $services) {
-    Set-Service -Name $s -StartupType Automatic -ErrorAction SilentlyContinue
-    Start-Service -Name $s -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] Servicios reactivados." -ForegroundColor Green
+:: RESTORE SERVICES
+echo.
+echo  [PASO 7/7] Reactivando servicios del sistema...
+echo.
+for %%s in (DiagTrack dmwappushservice SysMain WerSvc PcaSvc DPS WSearch) do (
+    sc config %%s start=auto >nul 2>&1
+    sc start %%s >nul 2>&1
+)
+echo  [OK] Servicios de Windows activos.
 
-# 5. Restore GameDVR
-Write-Host "`n   [-] Reactivando GameDVR..." -ForegroundColor Yellow
-$gameConfig = "HKCU:\System\GameConfigStore"
-if (Test-Path $gameConfig) {
-    Set-ItemProperty -Path $gameConfig -Name "GameDVR_Enabled" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-}
-$dvrPolicy = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR"
-if (Test-Path $dvrPolicy) {
-    Set-ItemProperty -Path $dvrPolicy -Name "AllowGameDVR" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] GameDVR activo." -ForegroundColor Green
+:: FINALIZACION
+echo.
+echo  ============================================================
+echo   REVERSION COMPLETADA CON EXITO
+echo  ============================================================
+echo.
+echo   Tu PC ha sido restaurado a su configuracion original.
+echo.
+echo  ============================================================
+echo.
+set /p "reboot= Deseas reiniciar el sistema ahora? (S/N): "
+if /i "%reboot%"=="S" shutdown /r /t 10 /c "Reiniciando para completar la reversion..."
 
-Write-Host "`n   ======================================================" -ForegroundColor Cyan
-Write-Host "      RESTAURACION COMPLETADA" -ForegroundColor Cyan
-Write-Host "   ======================================================" -ForegroundColor Cyan
-Write-Host "   El sistema ha vuelto a su configuración estándar." -ForegroundColor Yellow
-
-Write-Host "   [EXITO] Operacion finalizada." -ForegroundColor Green
-Write-Host "   Presiona cualquier tecla para salir..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+exit

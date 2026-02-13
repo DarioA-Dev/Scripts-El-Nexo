@@ -1,79 +1,91 @@
-<# : batch script hack
 @echo off
-:: ==========================================================================
-::   EL NEXO - SUITE DE OPTIMIZACION v4.0
-::   (C) 2026 DarioA-Dev | Engineering Dept.
-:: ==========================================================================
-::   ARQUITECTURA: Hybrid PowerShell Wrapper (Stable)
-:: ==========================================================================
-
-:: 1. INICIO ROBUSTO
+:: =========================================================================
+::   EL NEXO - REVERSION DE OPTIMIZACIONES v4.0
+::   Modulo: Restaurar Configuracion Original [SSD]
+:: =========================================================================
 chcp 65001 >nul
-setlocal
-cd /d "%~dp0"
-title [EL NEXO] Kernel Optimizer
+setlocal enabledelayedexpansion
+title EL NEXO v4.0 - REVERTIR OPTIMIZACIONES SSD
 color 0B
 
-:: 2. INTERFAZ (ASCII CON ESCAPE CORRECTO)
-cls
-echo.
-echo   ______ _       _   _ ______   _____
-echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \
-echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
-echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
-echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
-echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/
-echo.
-echo  ==========================================================================
-echo   MODULO: REVERTIR SSD (DEFAULT)
-echo   INFO: Optimizando... Por favor espere.
-echo  ==========================================================================
-echo.
-
-:: 3. ELEVACION DE PRIVILEGIOS (ADMIN)
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo   [!] SOLICITANDO PERMISOS DE ADMINISTRADOR...
-    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
+:: VERIFICACION DE PRIVILEGIOS
+openfiles >nul 2>&1
+if %errorlevel% neq 0 (
+    cls
+    color 0C
+    echo.
+    echo  ============================================================
+    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
+    echo  ============================================================
+    echo.
+    echo   Haz clic derecho sobre el archivo y selecciona:
+    echo   "Ejecutar como administrador"
+    echo.
+    echo  ============================================================
+    pause
     exit /b
 )
 
-:: 4. LANZAMIENTO DEL MOTOR POWERSHELL
-:: Lee este mismo archivo, ignora las lineas Batch y ejecuta el resto
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression -Command ((Get-Content -LiteralPath '%~f0') -join \"`n\")"
-exit /b
-:>
+:: CABECERA CIBERPUNK "EL NEXO"
+cls
+color 0B
+echo.
+echo  ============================================================
+echo      _____ _       _   _ _______   _______  
+echo     ^|  ___^| ^|     ^| \ ^| ^|  ___\ \ / /  _ \ 
+echo     ^| ^|__ ^| ^|     ^|  \^| ^| ^|__  \ V /^| ^| ^| ^|
+echo     ^|  __^|^| ^|     ^| . ` ^|  __^|  ^> ^< ^| ^| ^| ^|
+echo     ^| ^|___^| ^|____ ^| ^|\  ^| ^|___ / . \^| ^|_^| ^|
+echo     ^|_____^|______^|_^| \_^|_____/_/ \_\_____/ 
+echo.
+echo  ============================================================
+echo   PROTOCOLO: REVERSION DE OPTIMIZACIONES [SSD]
+echo   VERSION: 4.0 - Estado: Restaurando configuracion...
+echo  ============================================================
+echo.
 
-# ===========================================================================
-#  ZONA POWERSHELL (AQUI EMPIEZA LA LOGICA REAL)
-# ===========================================================================
-$Host.UI.RawUI.WindowTitle = "[EL NEXO] Motor Hibrido Activo"
-Write-Host "   [CORE] Cargando modulos del sistema..." -ForegroundColor Cyan
+:: RESTORE LAST ACCESS
+echo  [PASO 1/4] Restaurando registro de ultimo acceso...
+echo.
+fsutil behavior set disablelastaccess 2 >nul 2>&1
+fsutil behavior set disable8dot3 2 >nul 2>&1
+echo  [OK] Timestamps gestionados por el sistema.
 
-# 1. Restore Last Access
-Write-Host "`n   [1/3] Restaurando LastAccessUpdate..." -ForegroundColor Yellow
-Start-Process fsutil -ArgumentList "behavior set disablelastaccess 2" -NoNewWindow -Wait
-Write-Host "   [OK] Timestamp de acceso gestionado por sistema." -ForegroundColor Green
+:: RESTORE DISK TIMEOUT
+echo.
+echo  [PASO 2/4] Restaurando suspension de disco...
+echo.
+powercfg -change -disk-timeout-ac 20 >nul 2>&1
+powercfg -change -disk-timeout-dc 10 >nul 2>&1
+echo  [OK] Timeouts por defecto.
 
-# 2. Restore Disk Sleep
-Write-Host "`n   [2/3] Restaurando tiempo de espera disco..." -ForegroundColor Yellow
-powercfg -change -disk-timeout-ac 20
-powercfg -change -disk-timeout-dc 10
-Write-Host "   [OK] Suspension de disco restaurada." -ForegroundColor Green
+:: RESTORE MEMORY CACHE
+echo.
+echo  [PASO 3/4] Restaurando cache de memoria...
+echo.
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /f >nul 2>&1
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /f >nul 2>&1
+echo  [OK] Cache normalizada.
 
-# 3. Restore Memory Management
-Write-Host "`n   [3/3] Restaurando gestion de memoria..." -ForegroundColor Yellow
-$memMan = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
-if (Test-Path $memMan) {
-    Remove-ItemProperty -Path $memMan -Name "LargeSystemCache" -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] Cache de memoria normalizada." -ForegroundColor Green
+:: RESTORE PREFETCH
+echo.
+echo  [PASO 4/4] Restaurando servicios de prefetch...
+echo.
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnablePrefetcher" /t REG_DWORD /d 3 /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnableSuperfetch" /t REG_DWORD /d 3 /f >nul 2>&1
+echo  [OK] Prefetch activo.
 
-Write-Host "`n   ======================================================" -ForegroundColor Cyan
-Write-Host "      SSD RESTAURADO A NORMAL" -ForegroundColor Cyan
-Write-Host "   ======================================================" -ForegroundColor Cyan
-Write-Host "   Los cambios han sido revertidos." -ForegroundColor Yellow
+:: FINALIZACION
+echo.
+echo  ============================================================
+echo   REVERSION COMPLETADA CON EXITO
+echo  ============================================================
+echo.
+echo   Tu SSD/NVMe ha sido restaurado a configuracion por defecto.
+echo.
+echo  ============================================================
+echo.
+set /p "reboot= Deseas reiniciar el sistema ahora? (S/N): "
+if /i "%reboot%"=="S" shutdown /r /t 10 /c "Reiniciando para completar la reversion..."
 
-Write-Host "   [EXITO] Operacion finalizada." -ForegroundColor Green
-Write-Host "   Presiona cualquier tecla para salir..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+exit

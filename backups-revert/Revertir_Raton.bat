@@ -1,83 +1,87 @@
-<# : batch script hack
 @echo off
-:: ==========================================================================
-::   EL NEXO - SUITE DE OPTIMIZACION v4.0
-::   (C) 2026 DarioA-Dev | Engineering Dept.
-:: ==========================================================================
-::   ARQUITECTURA: Hybrid PowerShell Wrapper (Stable)
-:: ==========================================================================
-
-:: 1. INICIO ROBUSTO
+:: =========================================================================
+::   EL NEXO - REVERSION DE OPTIMIZACIONES v4.0
+::   Modulo: Restaurar Configuracion Original [RATON]
+:: =========================================================================
 chcp 65001 >nul
-setlocal
-cd /d "%~dp0"
-title [EL NEXO] Kernel Optimizer
+setlocal enabledelayedexpansion
+title EL NEXO v4.0 - REVERTIR PRECISION DE RATON
 color 0B
 
-:: 2. INTERFAZ (ASCII CON ESCAPE CORRECTO)
-cls
-echo.
-echo   ______ _       _   _ ______   _____
-echo  ^|  ____^| ^|     ^| \ ^| ^|  ____^| \ \ / / _ \
-echo  ^| ^|__  ^| ^|     ^|  \^| ^| ^|__     \ V / ^| ^| ^|
-echo  ^|  __^| ^| ^|     ^| . ` ^|  __^|     ^> ^<^| ^| ^| ^|
-echo  ^| ^|____^| ^|____ ^| ^|\  ^| ^|____   / . \ ^|_^| ^|
-echo  ^|______^|______^|_^| \_^|______^| /_/ \_\___/
-echo.
-echo  ==========================================================================
-echo   MODULO: REVERTIR RATON (DEFAULT)
-echo   INFO: Optimizando... Por favor espere.
-echo  ==========================================================================
-echo.
-
-:: 3. ELEVACION DE PRIVILEGIOS (ADMIN)
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo   [!] SOLICITANDO PERMISOS DE ADMINISTRADOR...
-    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
+:: VERIFICACION DE PRIVILEGIOS
+openfiles >nul 2>&1
+if %errorlevel% neq 0 (
+    cls
+    color 0C
+    echo.
+    echo  ============================================================
+    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
+    echo  ============================================================
+    echo.
+    echo   Haz clic derecho sobre el archivo y selecciona:
+    echo   "Ejecutar como administrador"
+    echo.
+    echo  ============================================================
+    pause
     exit /b
 )
 
-:: 4. LANZAMIENTO DEL MOTOR POWERSHELL
-:: Lee este mismo archivo, ignora las lineas Batch y ejecuta el resto
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression -Command ((Get-Content -LiteralPath '%~f0') -join \"`n\")"
-exit /b
-:>
+:: CABECERA CIBERPUNK "EL NEXO"
+cls
+color 0B
+echo.
+echo  ============================================================
+echo      _____ _       _   _ _______   _______  
+echo     ^|  ___^| ^|     ^| \ ^| ^|  ___\ \ / /  _ \ 
+echo     ^| ^|__ ^| ^|     ^|  \^| ^| ^|__  \ V /^| ^| ^| ^|
+echo     ^|  __^|^| ^|     ^| . ` ^|  __^|  ^> ^< ^| ^| ^| ^|
+echo     ^| ^|___^| ^|____ ^| ^|\  ^| ^|___ / . \^| ^|_^| ^|
+echo     ^|_____^|______^|_^| \_^|_____/_/ \_\_____/ 
+echo.
+echo  ============================================================
+echo   PROTOCOLO: REVERSION DE OPTIMIZACIONES [RATON]
+echo   VERSION: 4.0 - Estado: Restaurando configuracion...
+echo  ============================================================
+echo.
 
-# ===========================================================================
-#  ZONA POWERSHELL (AQUI EMPIEZA LA LOGICA REAL)
-# ===========================================================================
-$Host.UI.RawUI.WindowTitle = "[EL NEXO] Motor Hibrido Activo"
-Write-Host "   [CORE] Cargando modulos del sistema..." -ForegroundColor Cyan
+:: RESTORE ACCELERATION
+echo  [PASO 1/3] Restaurando aceleracion del raton...
+echo.
+reg add "HKCU\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "1" /f >nul 2>&1
+reg add "HKCU\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "6" /f >nul 2>&1
+reg add "HKCU\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "10" /f >nul 2>&1
+echo  [OK] Aceleracion por defecto.
 
-# 1. Restore Acceleration
-Write-Host "`n   [1/2] Reactivando aceleracion..." -ForegroundColor Yellow
-$mouseKey = "HKCU:\Control Panel\Mouse"
-if (Test-Path $mouseKey) {
-    Set-ItemProperty -Path $mouseKey -Name "MouseSpeed" -Value "1" -Type String -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path $mouseKey -Name "MouseThreshold1" -Value "6" -Type String -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path $mouseKey -Name "MouseThreshold2" -Value "10" -Type String -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] Aceleracion por defecto." -ForegroundColor Green
+:: RESTORE BUFFER
+echo.
+echo  [PASO 2/3] Restaurando buffer de datos...
+echo.
+reg delete "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /f >nul 2>&1
+echo  [OK] Buffer normalizado.
 
-# 2. Restore Buffer
-Write-Host "`n   [2/2] Restaurando MouseDataQueueSize..." -ForegroundColor Yellow
-$mouClass = "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters"
-if (Test-Path $mouClass) {
-    Remove-ItemProperty -Path $mouClass -Name "MouseDataQueueSize" -ErrorAction SilentlyContinue
-}
-Write-Host "   [OK] Buffer de hardware original." -ForegroundColor Green
+:: RESTORE CURVES
+echo.
+echo  [PASO 3/3] Restaurando curvas de movimiento...
+echo.
+reg delete "HKCU\Control Panel\Mouse" /v "SmoothMouseXCurve" /f >nul 2>&1
+reg delete "HKCU\Control Panel\Mouse" /v "SmoothMouseYCurve" /f >nul 2>&1
+reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "400" /f >nul 2>&1
+reg add "HKCU\Control Panel\Mouse" /v "MouseHoverTime" /t REG_SZ /d "400" /f >nul 2>&1
+echo  [OK] Curvas restauradas.
 
-Write-Host "`n   ======================================================" -ForegroundColor Cyan
-Write-Host "      CONFIGURACION ORIGINAL APLICADA" -ForegroundColor Cyan
-Write-Host "   ======================================================" -ForegroundColor Cyan
-Write-Host "   Debes REINICIAR el PC." -ForegroundColor Yellow
+:: FINALIZACION
+echo.
+echo  ============================================================
+echo   REVERSION COMPLETADA CON EXITO
+echo  ============================================================
+echo.
+echo   Configuracion de raton restaurada a valores por defecto.
+echo.
+echo   IMPORTANTE: Debes REINICIAR para aplicar los cambios.
+echo.
+echo  ============================================================
+echo.
+set /p "reboot= Deseas reiniciar el sistema ahora? (S/N): "
+if /i "%reboot%"=="S" shutdown /r /t 10 /c "Reiniciando para completar la reversion..."
 
-$r = Read-Host "¿Deseas reiniciar ahora? (S/N)"
-if ($r -eq 'S') {
-    Restart-Computer -Force
-}
-
-Write-Host "   [EXITO] Operacion finalizada." -ForegroundColor Green
-Write-Host "   Presiona cualquier tecla para salir..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+exit

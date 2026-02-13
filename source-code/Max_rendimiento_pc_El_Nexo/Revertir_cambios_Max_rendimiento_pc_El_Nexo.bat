@@ -1,78 +1,127 @@
 @echo off
-:: ==========================================================
-::   EL NEXO - PROTOCOLO DE REVERSIÓN (ROLLBACK)
-::   Objetivo: Restaurar valores de fábrica de Windows
-:: ==========================================================
+:: =========================================================================
+::   EL NEXO - REVERSION DE OPTIMIZACIONES v4.0
+::   Modulo: Restaurar Configuracion Original [PC ESCRITORIO]
+:: =========================================================================
 chcp 65001 >nul
-title EL NEXO: RESTAURAR SISTEMA A FÁBRICA
-color 0E
 setlocal enabledelayedexpansion
+title EL NEXO v4.0 - REVERTIR OPTIMIZACIONES PC
+color 0B
 
-:: 1. VERIFICACIÓN DE ADMIN
-net session >nul 2>&1
+:: VERIFICACION DE PRIVILEGIOS
+openfiles >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] Necesitas permisos de Administrador para restaurar el sistema.
+    cls
+    color 0C
+    echo.
+    echo  ============================================================
+    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
+    echo  ============================================================
+    echo.
+    echo   Haz clic derecho sobre el archivo y selecciona:
+    echo   "Ejecutar como administrador"
+    echo.
+    echo  ============================================================
     pause
-    exit
+    exit /b
 )
 
-echo ======================================================
-echo      INICIANDO RESTAURACIÓN DE VALORES DE FÁBRICA
-echo ======================================================
+:: CABECERA CIBERPUNK "EL NEXO"
+cls
+color 0B
+echo.
+echo  ============================================================
+echo      _____ _       _   _ _______   _______  
+echo     ^|  ___^| ^|     ^| \ ^| ^|  ___\ \ / /  _ \ 
+echo     ^| ^|__ ^| ^|     ^|  \^| ^| ^|__  \ V /^| ^| ^| ^|
+echo     ^|  __^|^| ^|     ^| . ` ^|  __^|  ^> ^< ^| ^| ^| ^|
+echo     ^| ^|___^| ^|____ ^| ^|\  ^| ^|___ / . \^| ^|_^| ^|
+echo     ^|_____^|______^|_^| \_^|_____/_/ \_\_____/ 
+echo.
+echo  ============================================================
+echo   PROTOCOLO: REVERSION DE OPTIMIZACIONES [PC ESCRITORIO]
+echo   VERSION: 4.0 - Estado: Restaurando configuracion...
+echo  ============================================================
 echo.
 
-:: 2. RESTAURAR PLAN DE ENERGÍA EQUILIBRADO
-echo [-] Restaurando plan de energía Equilibrado...
+:: RESTORE POWER SCHEME
+echo  [PASO 1/7] Restaurando planes de energia de fabrica...
+echo.
 powercfg -restoredefaultschemes >nul 2>&1
-:: Buscamos el esquema equilibrado estándar
-for /f "tokens=4" %%a in ('powercfg -list ^| findstr /C:"Equilibrado"') do set balanced=%%a
-if not defined balanced (
-    :: Si no lo encuentra por nombre (inglés/otros), intenta el GUID estándar
-    set balanced=381b4222-f694-41f0-9685-ff5bb260df2e
-)
-powercfg -setactive %balanced% >nul 2>&1
-echo [OK] Plan de energía restablecido.
+powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e >nul 2>&1
+powercfg -h on >nul 2>&1
+echo  [OK] Plan Equilibrado activado.
 
-:: 3. RESTAURAR VALORES DE KERNEL (BCDEDIT)
-echo [-] Eliminando modificaciones del Kernel...
+:: RESTORE KERNEL
+echo.
+echo  [PASO 2/7] Eliminando modificaciones del kernel...
+echo.
 bcdedit /deletevalue disabledynamictick >nul 2>&1
 bcdedit /deletevalue useplatformclock >nul 2>&1
 bcdedit /deletevalue tscsyncpolicy >nul 2>&1
 bcdedit /deletevalue bootux >nul 2>&1
 bcdedit /deletevalue hypervisorlaunchtype >nul 2>&1
+bcdedit /deletevalue x2apicpolicy >nul 2>&1
+echo  [OK] Parametros de arranque restaurados.
 
-:: 4. RESTAURAR REGISTRO (CPU & MEMORIA)
-echo [-] Restaurando gestión de memoria y prioridades...
-:: Win32PrioritySeparation: 2 (Valor por defecto para mejores programas)
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 2 /f >nul
-:: Restaurar Paging (Intercambio en disco)
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d 0 /f >nul
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d 0 /f >nul
-:: Restaurar Throttling de Red y Responsiveness
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 10 /f >nul
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 20 /f >nul
+:: RESTORE CPU & RAM
+echo.
+echo  [PASO 3/7] Restaurando prioridades de CPU y memoria...
+echo.
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 2 /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 20 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 10 /f >nul 2>&1
+echo  [OK] Configuracion de memoria normalizada.
 
-:: 5. RESTAURAR SERVICIOS (KILL LIST REVERSAL)
-echo [-] Reactivando servicios de Windows...
-set services=DiagTrack dmwappushservice SysMain WerSvc MapsBroker PcaSvc DPS RetailDemo WSearch
-for %%s in (%services%) do (
-    sc config %%s start= auto >nul 2>&1
+:: RESTORE GPU
+echo.
+echo  [PASO 4/7] Restaurando configuracion grafica...
+echo.
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /f >nul 2>&1
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Scheduler" /v "EnablePreemption" /f >nul 2>&1
+echo  [OK] GPU configurada por defecto.
+
+:: RESTORE INPUT
+echo.
+echo  [PASO 5/7] Restaurando configuracion de entrada...
+echo.
+reg delete "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /f >nul 2>&1
+reg delete "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /f >nul 2>&1
+reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "400" /f >nul 2>&1
+echo  [OK] Perifericos restaurados.
+
+:: RESTORE FILESYSTEM
+echo.
+echo  [PASO 6/7] Restaurando sistema de archivos...
+echo.
+fsutil behavior set disablelastaccess 2 >nul 2>&1
+fsutil behavior set disable8dot3 2 >nul 2>&1
+fsutil behavior set memoryusage 1 >nul 2>&1
+echo  [OK] NTFS configurado por defecto.
+
+:: RESTORE SERVICES
+echo.
+echo  [PASO 7/7] Reactivando servicios del sistema...
+echo.
+for %%s in (DiagTrack dmwappushservice SysMain WerSvc PcaSvc DPS WSearch) do (
+    sc config %%s start=auto >nul 2>&1
     sc start %%s >nul 2>&1
 )
+echo  [OK] Servicios de Windows activos.
 
-:: 6. RESTAURAR GPU Y GAME DVR
-echo [-] Reactivando GameDVR y ajustes de GPU por defecto...
-reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 1 /f >nul
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v "AllowGameDVR" /t REG_DWORD /d 1 /f >nul
-:: Nota: No revertimos MSI Mode masivamente para evitar romper drivers, 
-:: pero devolvemos HAGS a su valor por defecto si estaba cambiado.
-
-:: 7. LIMPIEZA FINAL
+:: FINALIZACION
 echo.
-echo ======================================================
-echo    RESTAURACIÓN COMPLETADA.
-echo    El sistema ha vuelto a su configuración estándar.
-echo ======================================================
-echo Reinicia para aplicar los cambios.
-pause
+echo  ============================================================
+echo   REVERSION COMPLETADA CON EXITO
+echo  ============================================================
+echo.
+echo   Tu PC ha sido restaurado a su configuracion original.
+echo.
+echo  ============================================================
+echo.
+set /p "reboot= Deseas reiniciar el sistema ahora? (S/N): "
+if /i "%reboot%"=="S" shutdown /r /t 10 /c "Reiniciando para completar la reversion..."
+
 exit
