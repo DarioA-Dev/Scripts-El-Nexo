@@ -55,12 +55,23 @@ color 0B
 :: 4. MODO MSI DINÁMICO (POWERSHELL BYPASS)
 echo.
 echo [+] Sincronizando Modo MSI en controladores de red...
-powershell -Command "$pci = 'HKLM:\SYSTEM\CurrentControlSet\Enum\PCI'; Get-ChildItem $pci -Recurse | Where-Object { $_.Name -like '*Interrupt Management*' } | ForEach-Object { $msi = \"$($_.Name)\MessageSignaledInterruptProperties\"; if (Test-Path \"Registry::$msi\") { Set-ItemProperty -Path \"Registry::$msi\" -Name 'MSISupported' -Value 1 -Type DWord } }" >nul 2>&1
+:: Método de archivo temporal más robusto
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI" /s /f "Interrupt Management" > "%temp%\nexo_msi_net.txt" 2>nul
+if exist "%temp%\nexo_msi_net.txt" (
+    for /f "tokens=*" %%i in ('type "%temp%\nexo_msi_net.txt" ^| findstr "HKEY_LOCAL_MACHINE"') do (
+        reg add "%%i\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d 1 /f >nul 2>&1
+    )
+    del /f /q "%temp%\nexo_msi_net.txt" >nul 2>&1
+)
 echo [OK] Interrupciones de hardware optimizadas (Latencia reducida).
 
 :: 5. NAGLE'S ALGORITHM (TCP ACK FREQUENCY)
 echo [+] Aplicando TcpAckFrequency a interfaces activas...
-powershell -Command "$interfaces = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces'; Get-ChildItem $interfaces | ForEach-Object { Set-ItemProperty -Path $_.PSPath -Name 'TcpAckFrequency' -Value 1 -Type DWord; Set-ItemProperty -Path $_.PSPath -Name 'TCPNoDelay' -Value 1 -Type DWord }" >nul 2>&1
+:: Método de registro directo más compatible
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" 2^>nul') do (
+    reg add "%%a" /v "TcpAckFrequency" /t REG_DWORD /d 1 /f >nul 2>&1
+    reg add "%%a" /v "TCPNoDelay" /t REG_DWORD /d 1 /f >nul 2>&1
+)
 echo [OK] Confirmación instantánea de paquetes activada.
 
 :: 6. PROTOCOLO HÍBRIDO (WI-FI / PORTÁTIL)
@@ -68,7 +79,9 @@ echo.
 set /p "laptop=¿El sistema es un Portátil o usa Wi-Fi? (S/N): "
 if /i "%laptop%"=="S" (
     echo [+] Desactivando gestión de energía en adaptadores inalámbricos...
-    powershell -Command "Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | ForEach-Object { Disable-NetAdapterPowerManagement -Name $_.Name -ErrorAction SilentlyContinue }" >nul 2>&1
+    :: Método de registro más compatible
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\0000" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}\0001" /v "PnPCapabilities" /t REG_DWORD /d 24 /f >nul 2>&1
     echo [OK] Ahorro de energía Wi-Fi neutralizado.
 )
 
@@ -77,7 +90,11 @@ echo.
 set /p "dns=¿Deseas inyectar DNS de Cloudflare (1.1.1.1)? (S/N): "
 if /i "%dns%"=="S" (
     echo [+] Configurando servidores DNS primarios y secundarios...
-    powershell -Command "$adapters = Get-NetAdapter | Where-Object {$_.Status -eq 'Up'}; foreach ($a in $adapters) { Set-DnsClientServerAddress -InterfaceAlias $a.Name -ServerAddresses ('1.1.1.1','1.0.0.1') -ErrorAction SilentlyContinue }" >nul 2>&1
+    :: Método netsh más compatible
+    netsh interface ip set dns "Ethernet" static 1.1.1.1 primary >nul 2>&1
+    netsh interface ip add dns "Ethernet" 1.0.0.1 index=2 >nul 2>&1
+    netsh interface ip set dns "Wi-Fi" static 1.1.1.1 primary >nul 2>&1
+    netsh interface ip add dns "Wi-Fi" 1.0.0.1 index=2 >nul 2>&1
     echo [OK] DNS de alta velocidad establecido.
 )
 
