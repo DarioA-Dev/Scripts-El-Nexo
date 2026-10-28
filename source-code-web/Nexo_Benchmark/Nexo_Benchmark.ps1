@@ -1,36 +1,51 @@
 # =========================================================================
-#  EL NEXO BENCHMARK - v18 (script de solo lectura)
+#  EL NEXO BENCHMARK  v5.2 (informe VERSION=18) - script de solo lectura
 #  Codigo abierto: https://github.com/DarioA-Dev/Scripts-El-Nexo
 #
 #  Que hace:
-#   - Lee CPU, GPU, RAM, sistema, disco y numero de apps de inicio (WMI/CIM).
+#   - Lee CPU, GPU, RAM, sistema, disco y numero de apps de inicio (CIM).
 #   - Escribe dos ficheros de texto en %ProgramData%\ElNexo\Benchmark:
-#       resultado_nexo.txt           (lo subes a elnexocenter.com/nexos/benchmark.html)
+#       resultado_nexo.txt           (se sube a elnexocenter.com/nexos/benchmark.html)
 #       GUIA_MEJORAR_RENDIMIENTO.txt (consejos segun tu equipo)
 #   - Abre la pagina del benchmark y la carpeta del informe.
 #
 #  Que NO hace:
 #   - No cambia ninguna configuracion de Windows.
-#   - No envia nada a internet: el informe lo subes tu manualmente y se
-#     analiza en tu navegador.
+#   - No envia nada a internet: el informe lo subes tu y se analiza en tu
+#     navegador.
 #   - No escribe nada fuera de %ProgramData%\ElNexo.
+#
+#  Estilo de consola: docs/ESTILO_CONSOLA.md (mismos tokens que los .bat).
 # =========================================================================
 $ErrorActionPreference = 'Stop'
+$useColor = -not ($env:NO_COLOR -or $env:NEXO_NO_COLOR)
+
+function Say([string]$tag, [string]$msg) {
+    $colors = @{ 'OK' = 'Green'; '!' = 'Yellow'; 'ERROR' = 'Red'; 'PASO' = 'Cyan' }
+    $label = if ($tag -like 'PASO*') { "[$tag]" } else { "[$tag]" }
+    $key = if ($tag -like 'PASO*') { 'PASO' } else { $tag }
+    if ($useColor -and $colors.ContainsKey($key)) {
+        Write-Host (' ' + $label) -ForegroundColor $colors[$key] -NoNewline
+        Write-Host (' ' + $msg)
+    } else {
+        Write-Host (' ' + $label + ' ' + $msg)
+    }
+}
+
 try {
-    Write-Host '   [+] Leyendo CPU...' -ForegroundColor Cyan
+    Write-Host ''
+    Say 'PASO 1/6' 'Leyendo CPU...'
     $cpu = (Get-CimInstance Win32_Processor | Select-Object -First 1).Name
 
-    Write-Host '   [+] Leyendo GPU...' -ForegroundColor Cyan
+    Say 'PASO 2/6' 'Leyendo GPU...'
     $gpu = (Get-CimInstance Win32_VideoController | Where-Object { $_.Name -notlike '*Basic*' } | Select-Object -First 1).Name
     if (-not $gpu) { $gpu = (Get-CimInstance Win32_VideoController | Select-Object -First 1).Name }
 
-    Write-Host '   [+] Leyendo RAM...' -ForegroundColor Cyan
+    Say 'PASO 3/6' 'Leyendo RAM y sistema...'
     $ramGB = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 1)
-
-    Write-Host '   [+] Leyendo Sistema...' -ForegroundColor Cyan
     $winVer = (Get-CimInstance Win32_OperatingSystem).Caption
 
-    Write-Host '   [+] Leyendo almacenamiento...' -ForegroundColor Cyan
+    Say 'PASO 4/6' 'Leyendo almacenamiento...'
     $disk = Get-CimInstance Win32_DiskDrive | Select-Object -First 1
     $diskModel = $disk.Model
     $diskGB = [math]::Round($disk.Size / 1GB, 0)
@@ -42,12 +57,13 @@ try {
     } catch { $diskType = $null }
     if (-not $diskType -or $diskType -eq 'Unspecified') { $diskType = 'SSD/NVMe' }
 
-    Write-Host '   [+] Leyendo apps de inicio...' -ForegroundColor Cyan
+    Say 'PASO 5/6' 'Leyendo apps de inicio...'
     $startupApps = @(Get-CimInstance Win32_StartupCommand | Select-Object Name, Command, Location)
     $startupReg = Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue
     $startupCount = $startupApps.Count
     if ($startupReg) { $startupCount += @($startupReg.PSObject.Properties | Where-Object { $_.Name -notlike 'PS*' }).Count }
 
+    Say 'PASO 6/6' 'Guardando el informe...'
     $nl = [Environment]::NewLine
     $outFolder = Join-Path $env:ProgramData 'ElNexo\Benchmark'
     New-Item -ItemType Directory -Force -Path $outFolder | Out-Null
@@ -94,7 +110,7 @@ try {
     $guia += '    - Adobe Creative Cloud, Java Updater' + $nl
     $guia += '    - Apps de impresoras (HP Smart, Epson, Canon)' + $nl
     $guia += '    - NVIDIA GeForce Experience (el driver funciona sin ella)' + $nl + $nl
-    $guia += 'PLAN DE ENERGIA - Activa Maximo Rendimiento:' + $nl
+    $guia += 'PLAN DE ENERGIA - Usa Alto rendimiento si estas enchufado:' + $nl
     $guia += '  Panel de control > Hardware > Opciones de energia > Alto rendimiento' + $nl + $nl
     $guia += 'ACTUALIZACIONES DE DRIVERS:' + $nl
     $guia += '  - GPU: Descarga siempre los drivers mas recientes de NVIDIA/AMD/Intel' + $nl
@@ -118,7 +134,7 @@ try {
     $guia += 'ALMACENAMIENTO:' + $nl
     $guia += "  Tienes: $diskModel ($diskGB GB - $diskType)" + $nl
     $guia += '  - Si tienes HDD: Pasar a SSD NVMe es la mejora mas notoria posible' + $nl
-    $guia += '  - Si tienes SSD SATA: Un NVMe PCIe 4.0 duplica velocidades' + $nl
+    $guia += '  - Si tienes SSD SATA: Un NVMe PCIe 4.0 mejora mucho las cargas grandes' + $nl
     $guia += '  - Si tienes NVMe: Ya tienes lo mejor. Prioriza CPU/GPU' + $nl + $nl
     $guia += 'GPU - Cuanto mejoras con un upgrade:' + $nl
     $guia += '  La GPU es el componente que mas impacta en gaming y creacion de contenido.' + $nl
@@ -129,38 +145,34 @@ try {
     $guia += '================================================================' + $nl + $nl
     $guia += '  - Activa NVIDIA DLSS / AMD FSR / Intel XeSS segun tu GPU' + $nl
     $guia += '  - Reduce Sombras y Distancia de dibujado (mayor impacto en FPS)' + $nl
-    $guia += '  - Usa V-Sync desactivado + framerate cap manual (menos latencia)' + $nl
+    $guia += '  - Usa V-Sync desactivado + limite de FPS manual (menos latencia)' + $nl
     $guia += '  - Activa Resizable BAR / Smart Access Memory si tu equipo lo soporta' + $nl
     $guia += '  - En NVIDIA: Panel de control > Gestion de energia > Maximo rendimiento' + $nl + $nl
     $guia += '================================================================' + $nl
     $guia += '  Vuelve a ejecutar el benchmark tras optimizar para ver tu mejora' + $nl
-    $guia += '  y sube tu resultado a elnexocenter.com para obtener tu rango!' + $nl
+    $guia += '  y sube tu resultado a elnexocenter.com para obtener tu rango.' + $nl
     $guia += '================================================================'
     Set-Content -Path $guiaFile -Value $guia -Encoding UTF8
+    Say 'OK' 'Informe guardado.'
 
     Write-Host ''
-    Write-Host '  =============================================' -ForegroundColor DarkCyan
-    Write-Host '        ANALISIS COMPLETADO                    ' -ForegroundColor White
-    Write-Host '  =============================================' -ForegroundColor DarkCyan
-    Write-Host "   CPU    : $cpu" -ForegroundColor Yellow
-    Write-Host "   GPU    : $gpu" -ForegroundColor Yellow
-    Write-Host "   RAM    : $ramGB GB" -ForegroundColor Yellow
-    Write-Host "   DISCO  : $diskModel ($diskGB GB - $diskType)" -ForegroundColor Yellow
-    Write-Host "   INICIO : $startupCount apps" -ForegroundColor Yellow
-    Write-Host '  =============================================' -ForegroundColor DarkCyan
-    Write-Host '   RANGO  : ??? (Subelo a elnexocenter.com)' -ForegroundColor Cyan
-    Write-Host '  =============================================' -ForegroundColor DarkCyan
-    Write-Host ''
-    Write-Host "   Informe guardado en: $outFolder" -ForegroundColor Green
-    Write-Host '   Abriendo navegador...' -ForegroundColor Green
+    Write-Host '  ------------------------------------------------------------------------'
+    Write-Host "   CPU    : $cpu"
+    Write-Host "   GPU    : $gpu"
+    Write-Host "   RAM    : $ramGB GB"
+    Write-Host "   DISCO  : $diskModel ($diskGB GB - $diskType)"
+    Write-Host "   INICIO : $startupCount apps"
+    Write-Host '   RANGO  : sube resultado_nexo.txt a elnexocenter.com'
+    Write-Host '  ------------------------------------------------------------------------'
+    Write-Host "   Carpeta: $outFolder"
     Start-Sleep -Seconds 2
 
     # Navegador predeterminado del usuario y carpeta del informe
     Start-Process 'https://elnexocenter.com/nexos/benchmark.html'
     Start-Process explorer.exe $outFolder
+    exit 0
 } catch {
-    Write-Host ''
-    Write-Host "   [ERROR]: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "   Linea  : $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
-    Read-Host '   Pulsa Enter para cerrar'
+    Say 'ERROR' $_.Exception.Message
+    Say 'ERROR' ('Linea ' + $_.InvocationInfo.ScriptLineNumber)
+    exit 1
 }

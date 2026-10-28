@@ -1,179 +1,85 @@
 @echo off
-chcp 1252 >nul
-setlocal enabledelayedexpansion
-title EL NEXO v5.0 - MPO FIX [PLAN: FREE]
-color 0B
+setlocal EnableExtensions EnableDelayedExpansion
+title EL NEXO v5.2 - MPO FIX [PLAN: FREE]
 :: =========================================================================
-::  EL NEXO - MPO FIX [PLAN: FREE]  (v5.1 - blindado)
+::  EL NEXO - MPO FIX [PLAN: FREE]  v5.2
 ::  Codigo abierto: https://github.com/DarioA-Dev/Scripts-El-Nexo
-::  Opcion [1] guarda el valor original de OverlayTestMode en
-::  %ProgramData%\ElNexo\Backup\MPO_Fix\backup.txt antes de cambiarlo.
-::  Opcion [2] restaura exactamente ese valor.
+::  Opcion [1] guarda el valor original de OverlayTestMode y lo cambia.
+::  Opcion [2] restaura exactamente ese valor (o lo borra, como trae
+::  Windows de serie).
 :: =========================================================================
-
-fsutil dirty query %systemdrive% >nul 2>&1
-if %errorlevel% neq 0 (
-    cls & color 0C
-    echo.
-    echo  ============================================================
-    echo   ACCESO DENEGADO - Se requieren permisos de Administrador
-    echo  ============================================================
-    echo   Haz clic derecho y selecciona "Ejecutar como administrador"
-    echo  ============================================================
-    pause & exit /b
-)
-
-set "FIND=%SystemRoot%\System32\find.exe"
-set "NEXO_BK=%ProgramData%\ElNexo\Backup\MPO_Fix"
+set "UI_FILE=%~nx0"
+call :UI_INIT "MPO_Fix"
+call :UI_HEADER "MPO FIX" "5.2" "PLAN: FREE"
+call :UI_REQUIRE_ADMIN || exit /b 1
 set "DWM_KEY=HKLM\SOFTWARE\Microsoft\Windows\Dwm"
 
-cls
-color 0B
 echo.
-echo  ============================================================
-echo    ______ _       _   _ _______   ______
-echo   ^|  ____^|^| ^|     ^| \ ^| ^|^|  ___\ \ / / __ \
-echo   ^| ^|__  ^| ^|     ^|  \^| ^|^| ^|__  \ V / ^|  ^| ^|
-echo   ^|  __^| ^| ^|     ^| . ` ^|^|  __^|  ^> ^<^| ^|  ^| ^|
-echo   ^| ^|____^| ^|____ ^| ^|\  ^|^| ^|____/ . \ ^|__^| ^|
-echo   ^|______^|^|______^|^|_^| \_^|^|______/_/\_\____/
-echo.
-echo  ============================================================
-echo   MPO FIX   ^|   PLAN: FREE
-echo   Para la version completa: elnexocenter.com/optimizer
-echo  ============================================================
-echo.
-
-echo  Que deseas hacer?
-echo.
-echo   [1] Desactivar MPO  (Aplica el fix)
-echo   [2] Revertir MPO    (Restaura Windows por defecto)
-echo.
-set /p "accion=Elige una opcion (1/2): "
-if "%accion%"=="2" goto :REVERTIR
-if not "%accion%"=="1" (
-    echo.
-    echo  [!] Opcion no valida. Saliendo.
-    pause & exit /b
+call :UI_INFO "[1] Desactivar MPO  (aplica el fix)"
+call :UI_INFO "[2] Revertir MPO    (restaura tu valor anterior)"
+set "accion="
+set /p "accion= %C_ACC%[?]%C_RST% Elige una opcion [1/2]: "
+call :UI_LOG "[?] Opcion = !accion!"
+if "!accion!"=="2" goto :REVERTIR
+if not "!accion!"=="1" (
+    call :UI_WARN "Opcion no valida. No se ha cambiado nada."
+    call :UI_PAUSE
+    exit /b 0
 )
 
+call :UI_PLAN_BEGIN "QUE VA A HACER ESTE SCRIPT"
+call :UI_AUTO "Desactivar Multiplane Overlay: OverlayTestMode = 5"
+call :UI_INFO "Util si tienes parpadeos, pantallazos negros con Alt+Tab o"
+call :UI_INFO "tirones con overlays. Sin esos sintomas no merece la pena: en"
+call :UI_INFO "juegos en ventana sin bordes puede anadir algo de latencia."
+call :UI_INFO "En algunas versiones de Windows 11 24H2 puede no tener efecto."
+call :UI_OPT "Crear un punto de restauracion de Windows"
+call :UI_PLAN_END
 echo.
-echo  ============================================================
-echo   INFORMACION TECNICA - LEE ANTES DE CONTINUAR
-echo  ============================================================
-echo.
-echo   Que es MPO (Multiplane Overlay)?
-echo   Es una funcion de la GPU que permite mostrar capas
-echo   graficas por separado (como los subtitulos del sistema).
-echo   En juegos puede causar:
-echo     - Pantallazos negros al hacer Alt+Tab
-echo     - Micro-stuttering aleatorio en juegos
-echo     - Conflictos con overlays (Discord, NVIDIA, Xbox)
-echo.
-echo   Este fix desactiva MPO en el registro de Windows.
-echo   Solo merece la pena si tienes esos sintomas: en juegos en
-echo   ventana sin bordes puede anadir algo de latencia.
-echo   En algunas versiones de Windows 11 24H2 puede no tener efecto.
-echo.
-echo   REVERSIBLE: Si en algun momento deseas restaurar el
-echo   comportamiento original puedes ejecutar este mismo
-echo   script y elegir la opcion [2] Revertir.
-echo.
-echo  ============================================================
-echo.
-
-set /p "confirm=Deseas aplicar el MPO Fix? (S/N): "
-if /i not "%confirm%"=="S" (
-    echo.
-    echo  [!] Operacion cancelada por el usuario.
-    pause & exit /b
-)
-echo.
+call :UI_ASK OPT_RP "Crear punto de restauracion"
+call :UI_CONFIRM "Aplicar el MPO Fix" || exit /b 0
 
 call :BK_INIT
 if errorlevel 1 (
-    echo  [!] No se pudo crear la copia de seguridad en %ProgramData%\ElNexo.
-    echo      No se ha cambiado nada.
-    pause & exit /b
+    call :UI_FAIL "No se pudo crear la copia de seguridad. No se ha cambiado nada."
+    call :UI_PAUSE
+    exit /b 1
 )
-call :BK_REG "%DWM_KEY%" "OverlayTestMode"
-
-echo  [PASO 1/2] Desactivando Multiplane Overlay...
-reg add "%DWM_KEY%" /v "OverlayTestMode" /t REG_DWORD /d 5 /f >nul 2>&1
-if %errorlevel% equ 0 (
-    echo  [OK] MPO desactivado correctamente.
-) else (
-    echo  [!] Error al escribir en el registro. Asegurate de ejecutar como Administrador.
-    pause & exit /b
-)
-
 echo.
-echo  [PASO 2/2] Verificando cambio aplicado...
+if "%OPT_RP%"=="S" (
+    call :UI_INFO "Creando punto de restauracion..."
+    call :UI_RESTORE_POINT "El Nexo MPO Fix FREE"
+) else (
+    call :UI_SKIP "Punto de restauracion omitido."
+)
+
+call :UI_STEP 1 2 "Desactivando Multiplane Overlay..."
+call :SET_REG "%DWM_KEY%" "OverlayTestMode" REG_DWORD 5
+call :STEP_END "MPO desactivado correctamente." "Error al escribir en el registro."
+
+call :UI_STEP 2 2 "Verificando cambio aplicado..."
 set "MPO_VAL="
 for /f "tokens=3" %%v in ('reg query "%DWM_KEY%" /v OverlayTestMode 2^>nul') do set "MPO_VAL=%%v"
 if "%MPO_VAL%"=="0x5" (
-    echo  [OK] Verificacion correcta. Valor OverlayTestMode = 5.
+    call :UI_OK "Verificacion correcta. Valor OverlayTestMode = 5."
 ) else (
-    echo  [!] No se pudo verificar el valor. Comprueba manualmente si es necesario.
+    call :UI_FAIL "No se pudo verificar el valor."
 )
 
-echo.
-echo  ============================================================
-echo   MPO FIX FREE - COMPLETADO
-echo  ============================================================
-echo.
-echo   Cambios aplicados en esta version FREE:
-echo   [OK] OverlayTestMode = 5 en HKLM\SOFTWARE\Microsoft\Windows\Dwm
-echo   [OK] Pantallazos negros en Alt+Tab solucionados
-echo   [OK] Stuttering por conflicto MPO eliminado
-echo.
-echo  ============================================================
-echo   IMPORTANTE: DEBES REINICIAR EL PC PARA QUE SURTA EFECTO
-echo  ============================================================
-echo.
-echo  ============================================================
-echo   BLOQUEADO EN PLAN FREE - DISPONIBLE EN NEXO OPTIMIZER PRO:
-echo  ============================================================
-echo.
-echo   [PRO] Desactivacion de MPO por adaptador grafico especifico
-echo         (Evita conflictos en sistemas con GPU integrada + dedicada)
-echo.
-echo   [PRO] Fix de Hardware-accelerated GPU Scheduling (HAGS)
-echo         (Combinado con MPO off elimina el 99%% de pantallazos)
-echo.
-echo   [PRO] Desactivacion de Presentation Mode automatico
-echo         (Fuerza el modo de menor latencia en todos los juegos)
-echo.
-echo   [PRO] Fix de MPO en monitores multiples
-echo         (Configuracion avanzada para setups de 2+ pantallas)
-echo.
-echo   Consigue todo esto y mucho mas en:
-echo   elnexocenter.com/optimizer
-echo  ============================================================
-echo.
-set /p "reboot=Deseas reiniciar ahora? (S/N): "
-if /i "%reboot%"=="S" shutdown /r /t 10 /c "Reiniciando - MPO Fix El Nexo aplicado"
-exit /b
+call :UI_FINAL "MPO FIX FREE - COMPLETADO" "Nexo_MPO_Fix.bat, opcion 2" 1
+call :UI_REBOOT
+exit /b 0
 
 :REVERTIR
-echo.
-echo  ============================================================
-echo   REVERTIR MPO - RESTAURAR CONFIGURACION POR DEFECTO
-echo  ============================================================
-echo.
-echo   Se restaurara el valor de OverlayTestMode que habia antes
-echo   del fix (o se eliminara, que es lo que trae Windows).
-echo   Esto puede volver a causar pantallazos en Alt+Tab.
-echo.
-set /p "confirm_rev=Confirmas que deseas revertir? (S/N): "
-if /i not "%confirm_rev%"=="S" (
-    echo.
-    echo  [!] Operacion cancelada.
-    pause & exit /b
-)
-echo.
+set "NEXO_BK=%ProgramData%\ElNexo\Backup\%UI_ID%"
+call :UI_PLAN_BEGIN "QUE VA A RESTAURAR"
+call :UI_AUTO "OverlayTestMode al valor que tenias antes del fix"
+call :UI_INFO "(si no existia, se elimina, que es lo que trae Windows)"
+call :UI_INFO "Puede volver a causar pantallazos con Alt+Tab."
+call :UI_PLAN_END
+call :UI_CONFIRM "Revertir el MPO Fix" || exit /b 0
 
-echo  [PASO 1/1] Eliminando clave OverlayTestMode...
+call :UI_STEP 1 1 "Restaurando OverlayTestMode..."
 set "ORIG_T="
 set "ORIG_D="
 if exist "%NEXO_BK%\backup.txt" (
@@ -185,51 +91,250 @@ if exist "%NEXO_BK%\backup.txt" (
     )
 )
 if defined ORIG_T if /i not "%ORIG_T%"=="ABSENT" (
-    reg add "%DWM_KEY%" /v "OverlayTestMode" /t %ORIG_T% /d "%ORIG_D%" /f >nul 2>&1
-    echo  [OK] OverlayTestMode restaurado al valor que tenias antes ^(%ORIG_D%^).
-    move /y "%NEXO_BK%\backup.txt" "%NEXO_BK%\backup.restaurado.txt" >nul 2>&1
+    reg add "%DWM_KEY%" /v "OverlayTestMode" /t %ORIG_T% /d "%ORIG_D%" /f >nul 2>&1 || set "SF=1"
+    call :STEP_END "OverlayTestMode restaurado a tu valor anterior." "No se pudo restaurar el valor."
     goto :REVERTIDO
 )
 reg query "%DWM_KEY%" /v OverlayTestMode >nul 2>&1
-if %errorlevel% neq 0 (
-    echo  [!] La clave no existe. El MPO Fix no estaba aplicado.
-    pause & exit /b
+if errorlevel 1 (
+    call :UI_SKIP "El MPO Fix no estaba aplicado: no hay nada que revertir."
+    goto :REVERTIDO
 )
-reg delete "%DWM_KEY%" /v "OverlayTestMode" /f >nul 2>&1
-if %errorlevel% equ 0 (
-    echo  [OK] MPO restaurado a configuracion por defecto de Windows.
-) else (
-    echo  [!] Error al eliminar la clave. Comprueba permisos de Administrador.
-    pause & exit /b
-)
-if exist "%NEXO_BK%\backup.txt" move /y "%NEXO_BK%\backup.txt" "%NEXO_BK%\backup.restaurado.txt" >nul 2>&1
+reg delete "%DWM_KEY%" /v "OverlayTestMode" /f >nul 2>&1 || set "SF=1"
+call :STEP_END "MPO restaurado a configuracion por defecto de Windows." "Error al eliminar el valor."
 
 :REVERTIDO
-echo.
-echo  ============================================================
-echo   MPO FIX - REVERTIDO
-echo  ============================================================
-echo.
-echo   [OK] OverlayTestMode eliminado del registro
-echo   [OK] Windows utilizara MPO segun su configuracion original
-echo.
-echo  ============================================================
-echo   IMPORTANTE: DEBES REINICIAR EL PC PARA QUE SURTA EFECTO
-echo  ============================================================
-echo.
-set /p "reboot=Deseas reiniciar ahora? (S/N): "
-if /i "%reboot%"=="S" shutdown /r /t 10 /c "Reiniciando - MPO Revertido El Nexo"
-exit /b
+if exist "%NEXO_BK%\backup.txt" move /y "%NEXO_BK%\backup.txt" "%NEXO_BK%\backup.restaurado.txt" >nul 2>&1
+call :UI_FINAL "MPO FIX - REVERT COMPLETADO" "" 1
+call :UI_REBOOT
+exit /b 0
 
-:: =========================================================================
-::  RUTINAS INTERNAS - COPIA DE SEGURIDAD EL NEXO
-::    REG|clave|valor|tipo|dato   (o REG|clave|valor|ABSENT| si no existia)
-:: =========================================================================
+:: ==========================================================================
+::  BLOQUE COMUN DE INTERFAZ - EL NEXO 5.2
+::  Identico en todos los scripts. Guia: docs/ESTILO_CONSOLA.md
+::  Colores ANSI solo si la consola los admite; si no, texto plano.
+::  Para desactivar los colores: variable de entorno NO_COLOR o NEXO_NO_COLOR.
+:: ==========================================================================
+:UI_INIT
+set "UI_ID=%~1"
+set /a N_OK=0, N_SKIP=0, N_FAIL=0
+set "SF=0"
+set "FIND=%SystemRoot%\System32\find.exe"
+set "NEXO_LOG=%ProgramData%\ElNexo\Logs\%~1.log"
+if not exist "%ProgramData%\ElNexo\Logs\" mkdir "%ProgramData%\ElNexo\Logs" >nul 2>&1
+2>nul (>>"%NEXO_LOG%" echo ==== %date% %time% %UI_FILE% ====) || set "NEXO_LOG=NUL"
+set "ESC="
+set "C_ACC="
+set "C_OK="
+set "C_WARN="
+set "C_ERR="
+set "C_RST="
+if defined NO_COLOR goto :UI_INIT_PLAIN
+if defined NEXO_NO_COLOR goto :UI_INIT_PLAIN
+set "UI_VER="
+set "UI_BUILD=0"
+for /f "tokens=2 delims=[]" %%v in ('ver') do set "UI_VER=%%v"
+for /f "tokens=2" %%v in ("%UI_VER%") do set "UI_VER=%%v"
+for /f "tokens=3 delims=." %%v in ("%UI_VER%") do set "UI_BUILD=%%v"
+if %UI_BUILD% LSS 10586 goto :UI_INIT_PLAIN
+reg query "HKCU\Console" /v ForceV2 2>nul | %FIND% "0x0" >nul && goto :UI_INIT_PLAIN
+for /f %%e in ('echo prompt $E ^| cmd') do set "ESC=%%e"
+if not defined ESC goto :UI_INIT_PLAIN
+set "C_ACC=%ESC%[96m"
+set "C_OK=%ESC%[92m"
+set "C_WARN=%ESC%[93m"
+set "C_ERR=%ESC%[91m"
+set "C_RST=%ESC%[0m"
+exit /b 0
+:UI_INIT_PLAIN
+color 0B
+exit /b 0
+
+:UI_HEADER
+:: %1 = nombre   %2 = version   %3 = plan (opcional)
+cls
+echo.
+echo %C_ACC%  ==========================================================================%C_RST%
+echo %C_ACC%     ______ _       _   _ _______   ______%C_RST%
+echo %C_ACC%    ^|  ____^|^| ^|     ^| \ ^| ^|^|  ___\ \ / / __ \%C_RST%
+echo %C_ACC%    ^| ^|__  ^| ^|     ^|  \^| ^|^| ^|__  \ V / ^|  ^| ^|%C_RST%
+echo %C_ACC%    ^|  __^| ^| ^|     ^| . ` ^|^|  __^|  ^> ^<^| ^|  ^| ^|%C_RST%
+echo %C_ACC%    ^| ^|____^| ^|____ ^| ^|\  ^|^| ^|____/ . \ ^|__^| ^|%C_RST%
+echo %C_ACC%    ^|______^|^|______^|^|_^| \_^|^|______/_/\_\____/%C_RST%
+echo.
+echo %C_ACC%  ==========================================================================%C_RST%
+if "%~3"=="" (echo   %~1   ^|   v%~2) else (echo   %~1   ^|   v%~2   ^|   %~3)
+echo   Codigo abierto: github.com/DarioA-Dev/Scripts-El-Nexo
+echo %C_ACC%  ==========================================================================%C_RST%
+exit /b 0
+
+:UI_REQUIRE_ADMIN
+fsutil dirty query %systemdrive% >nul 2>&1 && exit /b 0
+echo.
+echo  %C_ERR%[ERROR]%C_RST% ACCESO DENEGADO - Se requieren permisos de Administrador
+echo          Haz clic derecho en el archivo y elige "Ejecutar como administrador".
+call :UI_LOG "[ERROR] Sin permisos de administrador"
+call :UI_PAUSE
+exit /b 1
+
+:UI_PLAN_BEGIN
+echo.
+echo  %C_ACC%%~1%C_RST%
+echo   ------------------------------------------------------------------------
+exit /b 0
+
+:UI_AUTO
+echo    [AUTO]      %~1
+exit /b 0
+
+:UI_OPT
+echo    [OPCIONAL]  %~1
+exit /b 0
+
+:UI_PLAN_END
+echo   ------------------------------------------------------------------------
+exit /b 0
+
+:UI_ASK
+:: %1 = variable de salida (S o N)   %2 = pregunta
+set "_ans="
+set /p "_ans= %C_ACC%[?]%C_RST% %~2 [S/N, por defecto N]: "
+if /i "!_ans!"=="S" (set "%~1=S") else (set "%~1=N")
+call :UI_LOG "[?] %~2 = !%~1!"
+exit /b 0
+
+:UI_CONFIRM
+echo.
+call :UI_ASK _go "%~1"
+if /i "!_go!"=="S" exit /b 0
+call :UI_WARN "Cancelado. No se ha cambiado nada."
+call :UI_PAUSE
+exit /b 1
+
+:UI_STEP
+:: %1 = n   %2 = total   %3 = texto
+echo.
+echo  %C_ACC%[PASO %~1/%~2]%C_RST% %~3
+call :UI_LOG "[PASO %~1/%~2] %~3"
+set "SF=0"
+exit /b 0
+
+:UI_OK
+echo  %C_OK%[OK]%C_RST% %~1
+set /a N_OK+=1
+call :UI_LOG "[OK] %~1"
+exit /b 0
+
+:UI_SKIP
+echo  %C_WARN%[!]%C_RST% %~1
+set /a N_SKIP+=1
+call :UI_LOG "[!] %~1"
+exit /b 0
+
+:UI_WARN
+echo  %C_WARN%[!]%C_RST% %~1
+call :UI_LOG "[!] %~1"
+exit /b 0
+
+:UI_FAIL
+echo  %C_ERR%[ERROR]%C_RST% %~1
+set /a N_FAIL+=1
+call :UI_LOG "[ERROR] %~1"
+exit /b 0
+
+:UI_INFO
+echo       %~1
+exit /b 0
+
+:STEP_END
+:: %1 = mensaje si todo fue bien   %2 = mensaje si algo fallo
+if "%SF%"=="0" (call :UI_OK "%~1") else (call :UI_FAIL "%~2")
+exit /b 0
+
+:UI_LOG
+2>nul >>"%NEXO_LOG%" echo [%time:~0,8%] %~1
+exit /b 0
+
+:UI_RESTORE_POINT
+:: Checkpoint-Computer devuelve exito aunque se salte el punto (limite de
+:: 24 h): por eso tambien se comprueba el aviso.
+powershell -NoProfile -Command "try { Checkpoint-Computer -Description '%~1' -RestorePointType 'MODIFY_SETTINGS' -ErrorAction Stop -WarningVariable w -WarningAction SilentlyContinue; if ($w) { exit 2 } } catch { exit 1 }" >nul 2>&1
+if errorlevel 2 (
+    call :UI_SKIP "Punto no creado: Windows solo permite uno cada 24 horas."
+    exit /b 0
+)
+if errorlevel 1 (
+    call :UI_SKIP "Punto no creado: Proteccion del sistema desactivada o sin espacio."
+    exit /b 0
+)
+call :UI_OK "Punto creado."
+exit /b 0
+
+:UI_PRO_BEGIN
+echo.
+echo  %C_ACC%INCLUIDO EN NEXO OPTIMIZER PRO (no en esta version FREE)%C_RST%
+echo   ------------------------------------------------------------------------
+exit /b 0
+
+:UI_PRO
+echo    [PRO] %~1
+if not "%~2"=="" echo          %~2
+exit /b 0
+
+:UI_PRO_END
+echo   ------------------------------------------------------------------------
+echo    Mas informacion: elnexocenter.com/optimizer
+exit /b 0
+
+:UI_FINAL
+:: %1 = titulo   %2 = REVERT asociado (o vacio)   %3 = 1 si hay que reiniciar
+set "_title=%~1"
+if %N_FAIL% GTR 0 set "_title=%~1 CON ERRORES"
+echo.
+echo %C_ACC%  ==========================================================================%C_RST%
+echo   %_title%
+echo %C_ACC%  ==========================================================================%C_RST%
+echo    Aplicados: %N_OK%    Omitidos: %N_SKIP%    Fallidos: %N_FAIL%
+echo    Log:                %NEXO_LOG%
+if defined NEXO_BK (echo    Copia de seguridad: %NEXO_BK%) else (echo    Copia de seguridad: no aplica, este script no cambia ajustes)
+if not "%~2"=="" echo    Para deshacerlo:    %~2
+if "%~3"=="1" (echo    Reinicio:           necesario para aplicar todos los cambios) else (echo    Reinicio:           no necesario)
+echo %C_ACC%  ==========================================================================%C_RST%
+call :UI_LOG "%_title% - aplicados %N_OK%, omitidos %N_SKIP%, fallidos %N_FAIL%"
+exit /b 0
+
+:UI_REBOOT
+:: Pregunta si reiniciar; nunca reinicia sin confirmacion
+echo.
+call :UI_ASK _rb "Reiniciar ahora"
+if /i "!_rb!"=="S" shutdown /r /t 10 /c "El Nexo: reiniciando para aplicar los cambios"
+exit /b 0
+
+:UI_PAUSE
+echo.
+echo   Pulsa una tecla para cerrar...
+pause >nul
+exit /b 0
+:: ==========================================================================
+::  BLOQUE COMUN DE COPIA DE SEGURIDAD - EL NEXO 5.2
+::  Antes de cambiar cada ajuste se guarda su valor ORIGINAL, en texto
+::  plano, en %ProgramData%\ElNexo\Backup\<script>\backup.txt
+::  Solo se guarda la primera vez: si ejecutas el script varias veces, el
+::  REVERT restaura lo que habia antes de la primera ejecucion.
+::  Lineas:  REG|clave|valor|tipo|dato   (REG|clave|valor|ABSENT| = no existia)
+::           SVC|servicio|tipo_inicio|RUNNING o STOPPED
+::           TASK|tarea|ENABLE o DISABLE
+::           PWR|ACTIVE|guid   PWR|HIBERNATE|0x0 o 0x1
+::           PSET|subgrupo|ajuste|guid|AC|DC   NET|clave|valor
+::           DNS|adaptador|DHCP o servidores   KEY|clave|PRESENT o ABSENT
+:: ==========================================================================
 :BK_INIT
+set "NEXO_BK=%ProgramData%\ElNexo\Backup\%UI_ID%"
 if not exist "%NEXO_BK%\" mkdir "%NEXO_BK%" >nul 2>&1
 if not exist "%NEXO_BK%\backup.txt" type nul > "%NEXO_BK%\backup.txt" 2>nul
-if not exist "%NEXO_BK%\backup.txt" exit /b 1
-exit /b 0
+if exist "%NEXO_BK%\backup.txt" exit /b 0
+set "NEXO_BK="
+exit /b 1
 
 :BK_REG
 set "_k=%~1"
@@ -249,4 +354,138 @@ for /f "tokens=1*" %%a in ("!_rest!") do (
     set "_d=%%b"
 )
 >>"%NEXO_BK%\backup.txt" echo REG^|%_k%^|%_n%^|!_t!^|!_d!
+exit /b 0
+
+:BK_SVC
+%FIND% /I "SVC|%~1|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+sc qc "%~1" >nul 2>&1
+if errorlevel 1 (
+    >>"%NEXO_BK%\backup.txt" echo SVC^|%~1^|ABSENT^|
+    exit /b 0
+)
+set "_st="
+for /f "tokens=3" %%t in ('sc qc "%~1" ^| %FIND% "START_TYPE"') do set "_st=%%t"
+set "_mode=demand"
+if "%_st%"=="0" set "_mode=boot"
+if "%_st%"=="1" set "_mode=system"
+if "%_st%"=="2" set "_mode=auto"
+if "%_st%"=="4" set "_mode=disabled"
+for /f %%x in ('sc qc "%~1" ^| %FIND% /C "DELAYED"') do if not "%%x"=="0" set "_mode=delayed-auto"
+set "_run=STOPPED"
+for /f %%x in ('sc query "%~1" ^| %FIND% /C "RUNNING"') do if not "%%x"=="0" set "_run=RUNNING"
+>>"%NEXO_BK%\backup.txt" echo SVC^|%~1^|%_mode%^|%_run%
+exit /b 0
+
+:BK_TASK
+%FIND% /I "TASK|%~1|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+set "_ts=ENABLE"
+for /f %%x in ('schtasks /Query /TN "%~1" /XML 2^>nul ^| %FIND% /C "<Enabled>false</Enabled>"') do if not "%%x"=="0" set "_ts=DISABLE"
+>>"%NEXO_BK%\backup.txt" echo TASK^|%~1^|%_ts%
+exit /b 0
+
+:BK_PWR
+%FIND% /I "PWR|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+call :GET_ACTIVE_SCHEME
+if defined _g >>"%NEXO_BK%\backup.txt" echo PWR^|ACTIVE^|%_g%
+set "_h="
+for /f "tokens=3" %%h in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v HibernateEnabled 2^>nul ^| %FIND% "REG_DWORD"') do set "_h=%%h"
+if defined _h >>"%NEXO_BK%\backup.txt" echo PWR^|HIBERNATE^|%_h%
+exit /b 0
+
+:GET_ACTIVE_SCHEME
+set "_g="
+for /f "tokens=2 delims=:(" %%g in ('powercfg /getactivescheme') do set "_g=%%g"
+if defined _g for /f "tokens=1" %%g in ("%_g%") do set "_g=%%g"
+exit /b 0
+
+:BK_PSET
+:: Ultimos dos valores hexadecimales de "powercfg /q" = AC y DC (no depende
+:: del idioma de Windows)
+%FIND% /I "PSET|%~1|%~2|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+call :GET_ACTIVE_SCHEME
+if not defined _g exit /b 0
+set "_prev="
+set "_last="
+for /f "tokens=2 delims=:" %%v in ('powercfg /q %_g% %~1 %~2 ^| %FIND% "0x"') do (
+    set "_prev=!_last!"
+    set "_last=%%v"
+)
+if not defined _prev exit /b 0
+set /a _ac=!_prev!
+set /a _dc=!_last!
+>>"%NEXO_BK%\backup.txt" echo PSET^|%~1^|%~2^|%_g%^|!_ac!^|!_dc!
+exit /b 0
+
+:BK_NETTCP
+:: Lectura con CIM (independiente del idioma); no cambia nada
+%FIND% /I "NET|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+for /f "tokens=1,2 delims==" %%a in ('powershell -NoProfile -Command "$t=Get-NetTCPSetting -SettingName Internet -ErrorAction SilentlyContinue; $o=Get-NetOffloadGlobalSetting -ErrorAction SilentlyContinue; if ($t) { 'AUTOTUNING=' + $t.AutoTuningLevelLocal; 'TIMESTAMPS=' + $t.Timestamps }; if ($o) { 'RSS=' + $o.ReceiveSideScaling }"') do (
+    >>"%NEXO_BK%\backup.txt" echo NET^|%%a^|%%b
+)
+exit /b 0
+
+:BK_DNS
+:: DNS IPv4 actuales del adaptador (vacio = automatico por DHCP)
+%FIND% /I "DNS|%~1|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+call :GET_DNS "%~1"
+if not defined _guid (
+    >>"%NEXO_BK%\backup.txt" echo DNS^|%~1^|ABSENT
+    exit /b 0
+)
+if not defined _ns set "_ns=DHCP"
+>>"%NEXO_BK%\backup.txt" echo DNS^|%~1^|!_ns!
+exit /b 0
+
+:GET_DNS
+set "_ck="
+set "_guid="
+set "_ns="
+for /f "delims=" %%K in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Network\{4D36E972-E325-11CE-BFC1-08002BE10318}" /s /f "%~1" /d /e 2^>nul ^| %FIND% /I "\Connection"') do set "_ck=%%K"
+if not defined _ck exit /b 0
+set "_ck=%_ck:\Connection=%"
+for %%G in ("%_ck%") do set "_guid=%%~nxG"
+for /f "tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%_guid%" /v NameServer 2^>nul ^| %FIND% "REG_SZ"') do set "_ns=%%b"
+exit /b 0
+
+:BK_KEY
+%FIND% /I "KEY|%~1|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+reg query "%~1" >nul 2>&1
+if errorlevel 1 (
+    >>"%NEXO_BK%\backup.txt" echo KEY^|%~1^|ABSENT
+) else (
+    >>"%NEXO_BK%\backup.txt" echo KEY^|%~1^|PRESENT
+)
+exit /b 0
+
+:SET_REG
+:: %1 clave  %2 valor  %3 tipo  %4 dato. Guarda el original y escribe.
+call :BK_REG "%~1" "%~2"
+reg add "%~1" /v "%~2" /t %~3 /d "%~4" /f >nul 2>&1
+if errorlevel 1 set "SF=1"
+exit /b 0
+
+:SVC_OFF
+:: Desactiva un servicio si existe (guarda antes su tipo de inicio)
+sc qc "%~1" >nul 2>&1 || exit /b 0
+call :BK_SVC "%~1"
+sc stop "%~1" >nul 2>&1
+sc config "%~1" start= disabled >nul 2>&1
+if errorlevel 1 set "SF=1"
+call :UI_LOG "Servicio %~1 desactivado"
+exit /b 0
+
+:TASK_OFF
+:: Desactiva una tarea programada si existe (guarda antes su estado)
+schtasks /Query /TN "%~1" >nul 2>&1 || exit /b 0
+call :BK_TASK "%~1"
+schtasks /Change /TN "%~1" /Disable >nul 2>&1
+if errorlevel 1 set "SF=1"
+exit /b 0
+
+:IS_LAPTOP
+:: IS_LAPTOP=1 si hay bateria (CIM; WMIC ya no existe en Windows 11 24H2)
+set "IS_LAPTOP=0"
+set "_bc=0"
+for /f %%b in ('powershell -NoProfile -Command "@(Get-CimInstance -ClassName Win32_Battery -ErrorAction SilentlyContinue).Count"') do set "_bc=%%b"
+if not "%_bc%"=="0" set "IS_LAPTOP=1"
 exit /b 0
