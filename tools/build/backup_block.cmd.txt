@@ -1,0 +1,174 @@
+:: ==========================================================================
+::  BLOQUE COMUN DE COPIA DE SEGURIDAD - EL NEXO 5.2
+::  Antes de cambiar cada ajuste se guarda su valor ORIGINAL, en texto
+::  plano, en %ProgramData%\ElNexo\Backup\<script>\backup.txt
+::  Solo se guarda la primera vez: si ejecutas el script varias veces, el
+::  REVERT restaura lo que habia antes de la primera ejecucion.
+::  Lineas:  REG|clave|valor|tipo|dato   (REG|clave|valor|ABSENT| = no existia)
+::           SVC|servicio|tipo_inicio|RUNNING o STOPPED
+::           TASK|tarea|ENABLE o DISABLE
+::           PWR|ACTIVE|guid   PWR|HIBERNATE|0x0 o 0x1
+::           PSET|subgrupo|ajuste|guid|AC|DC   NET|clave|valor
+::           DNS|adaptador|DHCP o servidores   KEY|clave|PRESENT o ABSENT
+:: ==========================================================================
+:BK_INIT
+set "NEXO_BK=%ProgramData%\ElNexo\Backup\%UI_ID%"
+if not exist "%NEXO_BK%\" mkdir "%NEXO_BK%" >nul 2>&1
+if not exist "%NEXO_BK%\backup.txt" type nul > "%NEXO_BK%\backup.txt" 2>nul
+if exist "%NEXO_BK%\backup.txt" exit /b 0
+set "NEXO_BK="
+exit /b 1
+
+:BK_REG
+set "_k=%~1"
+set "_n=%~2"
+%FIND% /I "REG|%_k%|%_n%|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+set "_line="
+set "_t="
+set "_d="
+for /f "delims=" %%L in ('reg query "%_k%" /v "%_n%" 2^>nul ^| %FIND% "REG_"') do set "_line=%%L"
+if not defined _line (
+    >>"%NEXO_BK%\backup.txt" echo REG^|%_k%^|%_n%^|ABSENT^|
+    exit /b 0
+)
+set "_rest=!_line:*%_n%=!"
+for /f "tokens=1*" %%a in ("!_rest!") do (
+    set "_t=%%a"
+    set "_d=%%b"
+)
+>>"%NEXO_BK%\backup.txt" echo REG^|%_k%^|%_n%^|!_t!^|!_d!
+exit /b 0
+
+:BK_SVC
+%FIND% /I "SVC|%~1|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+sc qc "%~1" >nul 2>&1
+if errorlevel 1 (
+    >>"%NEXO_BK%\backup.txt" echo SVC^|%~1^|ABSENT^|
+    exit /b 0
+)
+set "_st="
+for /f "tokens=3" %%t in ('sc qc "%~1" ^| %FIND% "START_TYPE"') do set "_st=%%t"
+set "_mode=demand"
+if "%_st%"=="0" set "_mode=boot"
+if "%_st%"=="1" set "_mode=system"
+if "%_st%"=="2" set "_mode=auto"
+if "%_st%"=="4" set "_mode=disabled"
+for /f %%x in ('sc qc "%~1" ^| %FIND% /C "DELAYED"') do if not "%%x"=="0" set "_mode=delayed-auto"
+set "_run=STOPPED"
+for /f %%x in ('sc query "%~1" ^| %FIND% /C "RUNNING"') do if not "%%x"=="0" set "_run=RUNNING"
+>>"%NEXO_BK%\backup.txt" echo SVC^|%~1^|%_mode%^|%_run%
+exit /b 0
+
+:BK_TASK
+%FIND% /I "TASK|%~1|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+set "_ts=ENABLE"
+for /f %%x in ('schtasks /Query /TN "%~1" /XML 2^>nul ^| %FIND% /C "<Enabled>false</Enabled>"') do if not "%%x"=="0" set "_ts=DISABLE"
+>>"%NEXO_BK%\backup.txt" echo TASK^|%~1^|%_ts%
+exit /b 0
+
+:BK_PWR
+%FIND% /I "PWR|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+call :GET_ACTIVE_SCHEME
+if defined _g >>"%NEXO_BK%\backup.txt" echo PWR^|ACTIVE^|%_g%
+set "_h="
+for /f "tokens=3" %%h in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v HibernateEnabled 2^>nul ^| %FIND% "REG_DWORD"') do set "_h=%%h"
+if defined _h >>"%NEXO_BK%\backup.txt" echo PWR^|HIBERNATE^|%_h%
+exit /b 0
+
+:GET_ACTIVE_SCHEME
+set "_g="
+for /f "tokens=2 delims=:(" %%g in ('powercfg /getactivescheme') do set "_g=%%g"
+if defined _g for /f "tokens=1" %%g in ("%_g%") do set "_g=%%g"
+exit /b 0
+
+:BK_PSET
+:: Ultimos dos valores hexadecimales de "powercfg /q" = AC y DC (no depende
+:: del idioma de Windows)
+%FIND% /I "PSET|%~1|%~2|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+call :GET_ACTIVE_SCHEME
+if not defined _g exit /b 0
+set "_prev="
+set "_last="
+for /f "tokens=2 delims=:" %%v in ('powercfg /q %_g% %~1 %~2 ^| %FIND% "0x"') do (
+    set "_prev=!_last!"
+    set "_last=%%v"
+)
+if not defined _prev exit /b 0
+set /a _ac=!_prev!
+set /a _dc=!_last!
+>>"%NEXO_BK%\backup.txt" echo PSET^|%~1^|%~2^|%_g%^|!_ac!^|!_dc!
+exit /b 0
+
+:BK_NETTCP
+:: Lectura con CIM (independiente del idioma); no cambia nada
+%FIND% /I "NET|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+for /f "tokens=1,2 delims==" %%a in ('powershell -NoProfile -Command "$t=Get-NetTCPSetting -SettingName Internet -ErrorAction SilentlyContinue; $o=Get-NetOffloadGlobalSetting -ErrorAction SilentlyContinue; if ($t) { 'AUTOTUNING=' + $t.AutoTuningLevelLocal; 'TIMESTAMPS=' + $t.Timestamps }; if ($o) { 'RSS=' + $o.ReceiveSideScaling }"') do (
+    >>"%NEXO_BK%\backup.txt" echo NET^|%%a^|%%b
+)
+exit /b 0
+
+:BK_DNS
+:: DNS IPv4 actuales del adaptador (vacio = automatico por DHCP)
+%FIND% /I "DNS|%~1|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+call :GET_DNS "%~1"
+if not defined _guid (
+    >>"%NEXO_BK%\backup.txt" echo DNS^|%~1^|ABSENT
+    exit /b 0
+)
+if not defined _ns set "_ns=DHCP"
+>>"%NEXO_BK%\backup.txt" echo DNS^|%~1^|!_ns!
+exit /b 0
+
+:GET_DNS
+set "_ck="
+set "_guid="
+set "_ns="
+for /f "delims=" %%K in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Network\{4D36E972-E325-11CE-BFC1-08002BE10318}" /s /f "%~1" /d /e 2^>nul ^| %FIND% /I "\Connection"') do set "_ck=%%K"
+if not defined _ck exit /b 0
+set "_ck=%_ck:\Connection=%"
+for %%G in ("%_ck%") do set "_guid=%%~nxG"
+for /f "tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%_guid%" /v NameServer 2^>nul ^| %FIND% "REG_SZ"') do set "_ns=%%b"
+exit /b 0
+
+:BK_KEY
+%FIND% /I "KEY|%~1|" "%NEXO_BK%\backup.txt" >nul 2>&1 && exit /b 0
+reg query "%~1" >nul 2>&1
+if errorlevel 1 (
+    >>"%NEXO_BK%\backup.txt" echo KEY^|%~1^|ABSENT
+) else (
+    >>"%NEXO_BK%\backup.txt" echo KEY^|%~1^|PRESENT
+)
+exit /b 0
+
+:SET_REG
+:: %1 clave  %2 valor  %3 tipo  %4 dato. Guarda el original y escribe.
+call :BK_REG "%~1" "%~2"
+reg add "%~1" /v "%~2" /t %~3 /d "%~4" /f >nul 2>&1
+if errorlevel 1 set "SF=1"
+exit /b 0
+
+:SVC_OFF
+:: Desactiva un servicio si existe (guarda antes su tipo de inicio)
+sc qc "%~1" >nul 2>&1 || exit /b 0
+call :BK_SVC "%~1"
+sc stop "%~1" >nul 2>&1
+sc config "%~1" start= disabled >nul 2>&1
+if errorlevel 1 set "SF=1"
+call :UI_LOG "Servicio %~1 desactivado"
+exit /b 0
+
+:TASK_OFF
+:: Desactiva una tarea programada si existe (guarda antes su estado)
+schtasks /Query /TN "%~1" >nul 2>&1 || exit /b 0
+call :BK_TASK "%~1"
+schtasks /Change /TN "%~1" /Disable >nul 2>&1
+if errorlevel 1 set "SF=1"
+exit /b 0
+
+:IS_LAPTOP
+:: IS_LAPTOP=1 si hay bateria (CIM; WMIC ya no existe en Windows 11 24H2)
+set "IS_LAPTOP=0"
+set "_bc=0"
+for /f %%b in ('powershell -NoProfile -Command "@(Get-CimInstance -ClassName Win32_Battery -ErrorAction SilentlyContinue).Count"') do set "_bc=%%b"
+if not "%_bc%"=="0" set "IS_LAPTOP=1"
+exit /b 0

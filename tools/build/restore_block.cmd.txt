@@ -1,0 +1,97 @@
+:: ==========================================================================
+::  BLOQUE COMUN DE RESTAURACION - EL NEXO 5.2
+::  Lee %ProgramData%\ElNexo\Backup\<script>\backup.txt (creado por el
+::  script principal) y devuelve cada ajuste a su valor original.
+::  Sin copia, cada REVERT aplica valores de fabrica SOLO en los ajustes que
+::  toca su script.
+:: ==========================================================================
+:RS_INIT
+set "NEXO_BK=%ProgramData%\ElNexo\Backup\%UI_ID%"
+set "HAS_BK="
+if exist "%NEXO_BK%\backup.txt" set "HAS_BK=1"
+exit /b 0
+
+:RS_GENERIC
+:: Restaura las lineas REG, SVC, TASK y KEY de la copia
+for /f "usebackq tokens=1,2,3,4* delims=|" %%a in ("%NEXO_BK%\backup.txt") do (
+    if /i "%%a"=="REG" (
+        if /i "%%d"=="ABSENT" (
+            reg query "%%b" /v "%%c" >nul 2>&1 && (reg delete "%%b" /v "%%c" /f >nul 2>&1 || set "SF=1")
+        ) else (
+            reg add "%%b" /v "%%c" /t %%d /d "%%e" /f >nul 2>&1 || set "SF=1"
+        )
+        call :UI_LOG "Restaurado %%c"
+    )
+    if /i "%%a"=="SVC" if /i not "%%c"=="ABSENT" (
+        sc config "%%b" start= %%c >nul 2>&1 || set "SF=1"
+        if /i "%%d"=="RUNNING" sc start "%%b" >nul 2>&1
+        call :UI_LOG "Servicio %%b restaurado a %%c"
+    )
+    if /i "%%a"=="TASK" if /i not "%%c"=="ABSENT" (
+        schtasks /Change /TN "%%b" /%%c >nul 2>&1 || set "SF=1"
+        call :UI_LOG "Tarea %%b restaurada"
+    )
+    if /i "%%a"=="KEY" if /i "%%c"=="ABSENT" (
+        reg query "%%b" >nul 2>&1 && (reg delete "%%b" /f >nul 2>&1 || set "SF=1")
+        call :UI_LOG "Clave %%b eliminada"
+    )
+)
+exit /b 0
+
+:RS_PWR
+:: Devuelve el plan activo anterior y la hibernacion. %1 = GUID de plan El
+:: Nexo a eliminar (se pueden pasar varios separados por espacios)
+set "_orig="
+set "_hib="
+if defined HAS_BK (
+    for /f "usebackq tokens=1,2,3 delims=|" %%a in ("%NEXO_BK%\backup.txt") do (
+        if /i "%%a"=="PWR" if /i "%%b"=="ACTIVE" set "_orig=%%c"
+        if /i "%%a"=="PWR" if /i "%%b"=="HIBERNATE" set "_hib=%%c"
+    )
+)
+set "_target=381b4222-f694-41f0-9685-ff5bb260df2e"
+if defined _orig (
+    set "_mine="
+    for %%p in (%~1) do if /i "%%p"=="!_orig!" set "_mine=1"
+    if not defined _mine powercfg /query !_orig! >nul 2>&1 && set "_target=!_orig!"
+)
+powercfg -setactive %_target% >nul 2>&1 || set "SF=1"
+for %%p in (%~1) do powercfg -delete %%p >nul 2>&1
+if defined _hib (
+    if /i "%_hib%"=="0x0" (powercfg -h off >nul 2>&1) else (powercfg -h on >nul 2>&1)
+)
+call :UI_LOG "Plan activo: %_target%"
+exit /b 0
+
+:SVC_DEFAULT
+:: Sin copia: solo actua si el servicio existe y esta desactivado
+sc qc "%~1" >nul 2>&1 || exit /b 0
+for /f "tokens=3" %%t in ('sc qc "%~1" ^| %FIND% "START_TYPE"') do if "%%t"=="4" (
+    sc config "%~1" start= %~2 >nul 2>&1 || set "SF=1"
+    call :UI_LOG "Servicio %~1 a %~2 (valor de fabrica)"
+)
+exit /b 0
+
+:RS_CLOSE
+:: Marca la copia como usada: la proxima ejecucion del script crea una nueva
+if defined HAS_BK move /y "%NEXO_BK%\backup.txt" "%NEXO_BK%\backup.restaurado.txt" >nul 2>&1
+exit /b 0
+
+:GET_DNS
+:: _guid del adaptador con ese nombre y _ns con sus DNS IPv4 (vacio = DHCP)
+set "_ck="
+set "_guid="
+set "_ns="
+for /f "delims=" %%K in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Network\{4D36E972-E325-11CE-BFC1-08002BE10318}" /s /f "%~1" /d /e 2^>nul ^| %FIND% /I "\Connection"') do set "_ck=%%K"
+if not defined _ck exit /b 0
+set "_ck=%_ck:\Connection=%"
+for %%G in ("%_ck%") do set "_guid=%%~nxG"
+for /f "tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%_guid%" /v NameServer 2^>nul ^| %FIND% "REG_SZ"') do set "_ns=%%b"
+exit /b 0
+
+:IS_LAPTOP
+set "IS_LAPTOP=0"
+set "_bc=0"
+for /f %%b in ('powershell -NoProfile -Command "@(Get-CimInstance -ClassName Win32_Battery -ErrorAction SilentlyContinue).Count"') do set "_bc=%%b"
+if not "%_bc%"=="0" set "IS_LAPTOP=1"
+exit /b 0
